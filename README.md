@@ -1,102 +1,87 @@
-# Service Management System
+Service Management System
+A full-stack Service Management System built with Next.js, Node.js (Express), and Oracle Database.
+This platform facilitates structured management of service requests, customers, and employees.
 
-A full-stack Service Management System built using Next.js, Node.js (Express), and Oracle Database.  
-This system manages service requests, customers, and employees in a structured workflow.
+Tech Stack
+Layer	Technology
+Frontend	Next.js (React + Tailwind CSS)
+Backend	Node.js + Express.js
+Database	Oracle Database
+Auth	NextAuth.js (Credentials)
+API Type	REST APIs
+Arch	MVC (Model-View-Controller)
+Features
+User roles: Admin, Employee, Customer
 
----
+Service request workflow: create, assign, track, update status
 
-## Tech Stack
+Employee dashboard: view and update assigned tasks
 
-| Layer | Technology |
-|-------|-------------|
-| Frontend | Next.js (React + Tailwind CSS) |
-| Backend | Node.js + Express.js |
-| Database | Oracle Database |
-| Auth | NextAuth.js (Credentials Provider) |
-| API Type | REST APIs |
-| Architecture | MVC (Model-View-Controller) |
+Customer module: submit and monitor requests
 
----
+Admin panel: manage users, services, and reports
 
-## Features
+Fully integrated with OracleDB
 
-- User Roles: Admin, Employee, Customer  
-- Service Requests: Create, assign, track, and update request status  
-- Employee Dashboard: View assigned tasks and update progress  
-- Customer Module: Submit and monitor service requests  
-- Admin Panel: Manage users, services, and reports  
-- Database Integration: Fully connected with OracleDB  
-
----
-
-## Project Structure
-
+Project Structure
+bash
 service-management-system/
 │
 ├── backend/
-│ ├── config/ # OracleDB connection setup
-│ ├── controllers/ # API controllers (business logic)
-│ ├── models/ # Oracle SQL queries
-│ ├── routes/ # Express routes
-│ ├── server.js # Main backend entry
+│   ├── config/         # OracleDB connection setup
+│   ├── controllers/    # API controllers (business logic)
+│   ├── models/         # Oracle SQL queries
+│   ├── routes/         # Express routes
+│   └── server.js       # Backend entry point
 │
 ├── frontend/
-│ ├── app/ # Next.js 13+ app router
-│ ├── components/ # Reusable UI components
-│ ├── pages/ # Auth and routing pages
-│ ├── styles/ # Tailwind setup
+│   ├── app/            # Next.js 13+ app router
+│   ├── components/     # Shared React components
+│   ├── pages/          # Auth and other pages
+│   ├── styles/         # Tailwind CSS setup
 │
-├── .env.local # Environment variables (NextAuth, DB creds)
-├── package.json
-└── README.md
+├── .env.local          # Environment variables
+├── package.json        # Project scripts & dependencies
+└── README.md           # Documentation
+Database Design
+CUSTOMERS — Customer details
 
-yaml
-Copy code
+EMPLOYEES — Employee records
 
----
+SERVICES — Service catalog
 
-## Database Design
+REQUESTS — Service request status and tracking
 
-- CUSTOMERS — Stores customer details  
-- EMPLOYEES — Contains employee records  
-- SERVICES — Lists available services  
-- REQUESTS — Tracks service requests  
-- ASSIGNMENTS — Links employees to requests  
+ASSIGNMENTS — Employees ↔ requests relationship
 
-*(ER diagram and sample SQL queries can be found in `/backend/models`)*
+Sample ER diagram and SQL queries in /backend/models.
 
----
-
-## Installation & Setup
-
-### 1. Clone the Repository
-```bash
+Installation & Setup
+1. Clone the Repository
+bash
 git clone https://github.com/<your-username>/service-management-system.git
 cd service-management-system
 2. Backend Setup
 bash
-Copy code
 cd backend
 npm install
 npm start
 3. Frontend Setup
 bash
-Copy code
 cd ../frontend
 npm install
 npm run dev
 4. Environment Variables
-Create a .env.local file in the frontend and backend folders with:
+Create a .env.local file in both frontend and backend folders:
 
-ini
-Copy code
+text
 NEXTAUTH_SECRET=<your-secret-key>
 DB_USER=<oracle-username>
 DB_PASSWORD=<oracle-password>
 DB_CONNECT_STRING=<host:port/service-name>
 Usage
-Admins can manage users, services, and view reports
+Admins: Manage users, services, assignments, reports
 
-Employees can view assigned requests and update their status
+Employees: View assigned requests, update progress
 
-Customers can create requests and monitor progress
+Customers: Create requests, monitor status

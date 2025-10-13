@@ -458,4 +458,4 @@ For issues, questions, or suggestions, please:
 
 **Status**: Active Development
 
-For the latest updates and features, visit the [GitHub repository](https://github.com/<your-username>/service-management-system).
+For the latest updates and features, visit the [GitHub repository](https://github.com/PranavNagaraji/TaskOps/edit/main/README.md).

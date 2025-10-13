@@ -438,9 +438,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👥 Authors
 
-- **Your Name** - Initial work
-
-## 📞 Support
+- **PRANAV** - Initial work
 
 For issues, questions, or suggestions, please:
 - Open an issue on GitHub

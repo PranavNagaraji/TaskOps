@@ -442,8 +442,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For issues, questions, or suggestions, please:
 - Open an issue on GitHub
-- Contact: support@example.com
-- Check existing documentation
+- Contact: pranavsresh1947@gmail.com
 
 ## 🙏 Acknowledgments
 

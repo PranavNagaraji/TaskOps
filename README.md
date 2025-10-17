@@ -1,4 +1,4 @@
-# Service Management System
+# Task Operation Management System
 
 A comprehensive full-stack Service Management System built with Next.js, Node.js (Express), and Oracle Database. This system provides a structured workflow for managing service requests, customers, and employees across multiple user roles.
 

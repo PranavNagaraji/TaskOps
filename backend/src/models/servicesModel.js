@@ -9,13 +9,13 @@ async function getAllServices(connection) {
 }
 
 async function addService(connection, service) {
-    const { name, description, cost, duration, customer_id } = service;
-    const res = await connection.execute(`INSERT INTO SERVICES(NAME, DESCRIPTION, COST, DURATION, CUSTOMER_ID)
-        VALUES(:name, :description, :cost, :duration, :customer_id)`,
-        { name, description, cost, duration, customer_id},
+    const { name, description, cost, duration } = service;
+    const res = await connection.execute(`INSERT INTO SERVICES(NAME, DESCRIPTION, COST, DURATION)
+        VALUES(:name, :description, :cost, :duration)`,
+        { name, description, cost, duration },
         { autoCommit: true },
     );
-    return res;
+    return res.rowsAffected;
 }
 
 async function updateService(connection, id, service) {

@@ -8,6 +8,13 @@ async function getAllServices(connection) {
     return res.rows;
 }
 
+async function getServiceById(connection, id) {
+    const res = await connection.execute(`SELECT * FROM SERVICES WHERE SERVICE_ID = :id`,
+        { id },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    return res.rows[0];
+}
 async function addService(connection, service) {
     const { name, description, cost, duration } = service;
     const res = await connection.execute(`INSERT INTO SERVICES(NAME, DESCRIPTION, COST, DURATION)
@@ -25,7 +32,7 @@ async function updateService(connection, id, service) {
          SET NAME = :name,
              DESCRIPTION = :description,
              COST = :cost,
-             DURATION = TO_DSINTERVAL(:duration),
+             DURATION = :duration,
              STATUS = :status
          WHERE SERVICE_ID = :id`,
         { id, name, description, cost, duration, status },
@@ -41,4 +48,4 @@ async function deleteService(connection, id) {
     );
 }
 
-module.exports = { getAllServices, addService, updateService, deleteService };
+module.exports = { getAllServices, addService, updateService, deleteService, getServiceById };

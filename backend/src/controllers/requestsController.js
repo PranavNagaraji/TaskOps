@@ -1,5 +1,5 @@
 const oracledb = require('oracledb');
-const { getAllRequestsModel, addRequest, updateRequestStatus, deleteRequest, getAllRequestsWithDetails } = require("../models/requestsModel");
+const { getAllRequestsModel, addRequest, updateRequestStatus, deleteRequest, getAllRequestsWithDetails, setUnassignedInProgressToPending } = require("../models/requestsModel");
 const db = require("../config/db");
 
 async function getAllRequests(req, res) {
@@ -61,6 +61,20 @@ async function deleteOneRequest(req, res) {
     }
 }
 
+async function updateUnassignedInProgress(req, res) {
+    let connection;
+    try {
+        connection = await oracledb.getConnection(db.config);
+        const updatedCount = await setUnassignedInProgressToPending(connection);
+        res.status(200).json({ message: `${updatedCount} requests updated to Pending.` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (connection) await connection.close();
+    }
+}
+
 async function getRequests(req, res) {
     let connection;
     try {
@@ -75,4 +89,4 @@ async function getRequests(req, res) {
     }
 }
 
-module.exports = { getAllRequests, addOneRequest, updateStatus, deleteOneRequest, getRequests };
+module.exports = { getAllRequests, addOneRequest, updateStatus, deleteOneRequest, getRequests, updateUnassignedInProgress };

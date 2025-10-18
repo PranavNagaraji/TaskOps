@@ -27,7 +27,7 @@ export default async function AdminDashboard() {
     const inProgressRequests = requests.filter(r => r.STATUS === "In Progress").length;
 
     const activeEmployees = employees.filter(e => e.STATUS === "Active").length;
-    const acceptPercent = (assignments.length / requests.length) * 100;
+    const acceptPercent = requests.filter(e => e.STATUS === "Completed").length / requests.length * 100;
 
     const stats = [
         { title: "Total Requests", count: requests.length, color: "bg-blue-100", text: "text-blue-800" },

@@ -37,7 +37,7 @@ async function deleteCustomer(req, res) {
     let connection;
     try {
         connection = await oracledb.getConnection(db.config);
-        const { customer_id } = req.params; //change this to body/params if needed
+        const { customer_id } = req.params;
         await Customers.deleteCustomer(connection, customer_id);
         res.status(200).json({ message: "Customer deleted Successfully" });
     } catch (err) {

@@ -7,11 +7,8 @@ export default function EmployeeRequestsPage() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // ✅ Always run hooks before any conditional return
     useEffect(() => {
-        if (status === "authenticated") {
-            fetchRequests();
-        }
+        if (status === "authenticated") fetchRequests();
     }, [status]);
 
     async function fetchRequests() {
@@ -23,7 +20,7 @@ export default function EmployeeRequestsPage() {
             const data = await res.json();
             setRequests(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error("Failed to fetch requests:", err);
+            console.error(err);
             setRequests([]);
         }
     }
@@ -39,15 +36,12 @@ export default function EmployeeRequestsPage() {
             const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/assignments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    requestId,
-                    userId: session.user.id,
-                }),
+                body: JSON.stringify({ requestId, userId: session.user.id }),
             });
 
             if (res.ok) {
                 alert(`Request ${requestId} assigned successfully!`);
-                fetchRequests(); // refresh list
+                fetchRequests();
             } else {
                 const errMsg = await res.text();
                 alert(`Failed to assign request: ${errMsg}`);
@@ -60,68 +54,117 @@ export default function EmployeeRequestsPage() {
         }
     };
 
-    // ✅ Return *after* all hooks are declared
     if (status === "loading") {
-        return <div className="flex min-w-screen text-gray-500 px-6 py-4 justify-center">Loading...</div>;
+        return (
+            <div className="flex min-h-screen items-center justify-center text-gray-500 text-lg">
+                Loading...
+            </div>
+        );
     }
 
     if (status === "unauthenticated" || !session) {
-        return <div className="flex min-w-screen text-gray-500 px-6 py-4 justify-center">You must be logged in</div>;
+        return (
+            <div className="flex min-h-screen items-center justify-center text-gray-500 text-lg">
+                You must be logged in
+            </div>
+        );
     }
 
-    return (
-        <div className="min-h-screen bg-gray-50 p-4">
-            <h1 className="text-2xl font-bold mb-4">All Service Requests</h1>
+    // Function to get badge classes based on status
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case "Pending":
+                return "bg-yellow-100 text-yellow-800";
+            case "In Progress":
+                return "bg-blue-100 text-blue-800";
+            case "Completed":
+                return "bg-green-100 text-green-800";
+            default:
+                return "bg-gray-100 text-gray-800";
+        }
+    };
 
-            <div className="overflow-x-auto bg-white rounded-lg shadow-md p-4">
-                <table className="min-w-full text-left">
+    return (
+        <div className="min-h-screen bg-gray-50 p-6">
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">Service Requests</h1>
+
+            <div className="overflow-x-auto">
+                <table className="min-w-full bg-white shadow-lg rounded-lg overflow-hidden">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-4 py-2">Customer Name</th>
-                            <th className="px-4 py-2">Service Name</th>
-                            <th className="px-4 py-2">Phone</th>
-                            <th className="px-4 py-2">Address</th>
-                            <th className="px-4 py-2">Status</th>
-                            <th className="px-4 py-2">Created At</th>
-                            <th className="px-4 py-2">Action</th>
+                            {[
+                                "Customer",
+                                "Service",
+                                "Phone",
+                                "Address",
+                                "Status",
+                                "Created At",
+                                "Action",
+                            ].map((title) => (
+                                <th
+                                    key={title}
+                                    className="px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider"
+                                >
+                                    {title}
+                                </th>
+                            ))}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-gray-200">
                         {requests.length > 0 ? (
                             requests.map((r) => (
-                                <tr key={r.REQUEST_ID} className="border-b hover:bg-gray-50">
-                                    <td className="px-4 py-2">{r.CUSTOMER_NAME || "N/A"}</td>
-                                    <td className="px-4 py-2">{r.SERVICE_NAME || "N/A"}</td>
-                                    <td className="px-4 py-2">{r.CUSTOMER_PHONE || "N/A"}</td>
-                                    <td className="px-4 py-2">{r.CUSTOMER_ADDRESS || "N/A"}</td>
-                                    <td className="px-4 py-2">{r.STATUS}</td>
-                                    <td className="px-4 py-2">{new Date(r.CREATED_AT).toLocaleString()}</td>
-                                    <td className="px-4 py-2">
+                                <tr
+                                    key={r.REQUEST_ID}
+                                    className="hover:bg-gray-50 transition-colors duration-150"
+                                >
+                                    <td className="px-6 py-4 text-gray-700 font-medium">
+                                        {r.CUSTOMER_NAME || "N/A"}
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-700">{r.SERVICE_NAME || "N/A"}</td>
+                                    <td className="px-6 py-4 text-gray-700">{r.CUSTOMER_PHONE || "N/A"}</td>
+                                    <td className="px-6 py-4 text-gray-700">{r.CUSTOMER_ADDRESS || "N/A"}</td>
+                                    <td className="px-6 py-4">
+                                        <span
+                                            className={`inline-block px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap ${getStatusBadge(r.STATUS)}`}
+                                        >
+                                            {r.STATUS}
+                                        </span>
+                                    </td>
+
+                                    <td className="px-6 py-4 text-gray-500 text-sm">
+                                        {new Date(r.CREATED_AT).toLocaleString()}
+                                    </td>
+                                    <td className="px-6 py-4">
                                         {r.STATUS === "Pending" ? (
                                             <button
                                                 disabled={loading}
                                                 onClick={() => {
                                                     if (
                                                         confirm(
-                                                            "Are you sure you want this request? Do you want to mark this request as yours?"
+                                                            "Do you want to assign this request to yourself?"
                                                         )
                                                     ) {
                                                         handleAssign(r.REQUEST_ID);
                                                     }
                                                 }}
-                                                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 hover:cursor-pointer disabled:opacity-50"
+                                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors duration-150 hover:cursor-pointer"
                                             >
                                                 Assign
                                             </button>
                                         ) : (
-                                            <span>{r.EMPLOYEE_NAME ? `Assigned to ${r.EMPLOYEE_NAME}` : "n/a"}</span>
+                                            <span className="text-gray-600 text-sm">
+                                                {r.EMPLOYEE_NAME ? `Assigned to ${r.EMPLOYEE_NAME}` : "n/a"}
+                                            </span>
                                         )}
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={7} className="text-gray-500 px-4 py-2 text-center">
+                                <td
+                                    colSpan={7}
+                                    className="text-center py-8 text-gray-400 text-lg font-medium"
+                                >
                                     No requests found.
                                 </td>
                             </tr>

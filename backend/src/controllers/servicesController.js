@@ -16,6 +16,21 @@ async function getServices(req, res){
     }
 }
 
+async function getServiceByid(req, res){
+    let connection;
+    try{
+        connection=await oracledb.getConnection(config);
+        const {id}=req.params;
+        const data=await Services.getServiceById(connection, id);
+        res.status(200).json(data);
+    }catch(err){
+        res.status(500).json({error: err.message});
+    }finally{
+        if(connection)
+            await connection.close();
+    }
+}
+
 async function addService(req, res){
     let connection;
     try{
@@ -61,4 +76,4 @@ async function updateService(req, res){
     } 
 }
 
-module.exports={getServices, addService, deleteService, updateService};
+module.exports={getServices, addService, deleteService, updateService, getServiceByid};

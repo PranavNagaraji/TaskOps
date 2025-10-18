@@ -2,21 +2,19 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSession } from "next-auth/react";
+import ServiceCard from "@/app/components/ServiceCard";
 
 export default function NewRequestPage() {
     const router = useRouter();
-
-    // ✅ All hooks called unconditionally
     const [session, setSession] = useState(null);
     const [loadingSession, setLoadingSession] = useState(true);
-
     const [services, setServices] = useState([]);
     const [filtered, setFiltered] = useState([]);
     const [search, setSearch] = useState("");
     const [selected, setSelected] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Load session on mount
+    // Load session
     useEffect(() => {
         getSession().then((sess) => {
             setSession(sess);
@@ -24,7 +22,7 @@ export default function NewRequestPage() {
         });
     }, []);
 
-    // Fetch services on mount
+    // Fetch services
     useEffect(() => {
         async function fetchServices() {
             try {
@@ -46,7 +44,7 @@ export default function NewRequestPage() {
         fetchServices();
     }, []);
 
-    // Filter services based on search
+    // Filter services
     useEffect(() => {
         const q = search.toLowerCase();
         setFiltered(
@@ -60,34 +58,21 @@ export default function NewRequestPage() {
         );
     }, [search, services]);
 
-    // Early return for loading session
     if (loadingSession) return null;
-
-    // Early return for not logged in
     if (!session)
         return (
-            <div className="flex min-w-screen text-gray-500 px-6 py-4 justify-center">
+            <div className="flex min-h-screen items-center justify-center text-gray-500 px-6 py-4">
                 You must be logged in
             </div>
         );
 
-    // Format duration
-    const formatDuration = (minutes) => {
-        if (!minutes) return "0 min";
-        const hrs = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        const parts = [];
-        if (hrs) parts.push(`${hrs} hr${hrs > 1 ? "s" : ""}`);
-        if (mins) parts.push(`${mins} min`);
-        return parts.join(" ");
-    };
-
-    // Handle submit
     const handleSubmit = async () => {
         if (!selected) {
             alert("Please select a service to request.");
             return;
         }
+
+        if (!confirm(`Are you sure you want to request "${selected.NAME}"?`)) return;
 
         setLoading(true);
         try {
@@ -98,9 +83,7 @@ export default function NewRequestPage() {
                 return;
             }
 
-            const customerRes = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/${userId}`
-            );
+            const customerRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/${userId}`);
             const customerData = await customerRes.json();
             const customerId = customerData?.[0]?.CUSTOMER_ID;
 
@@ -135,49 +118,45 @@ export default function NewRequestPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
-            <h1 className="text-2xl font-bold mb-4">Request a New Service</h1>
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center p-6">
+            <h1 className="text-3xl sm:text-4xl font-extrabold mb-6 text-gray-800">Request a New Service</h1>
 
-            <input
-                type="text"
-                placeholder="Search services..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="border p-2 rounded w-full max-w-md mb-4"
-            />
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-4xl mb-8 items-center">
+                <input
+                    type="text"
+                    placeholder="Search services..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-4 py-2 w-full sm:flex-1 transition"
+                />
+                <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                    {loading ? "Submitting..." : "Request Service"}
+                </button>
+            </div>
 
-            <div className="w-full max-w-md mb-4">
+            {/* Services Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
                 {filtered.length > 0 ? (
                     filtered.map((service) => (
                         <div
                             key={service.SERVICE_ID}
-                            className={`p-3 mb-2 border rounded cursor-pointer ${selected?.SERVICE_ID === service.SERVICE_ID
-                                    ? "bg-blue-100 border-blue-500"
-                                    : "bg-white"
+                            className={`cursor-pointer rounded-2xl overflow-hidden border transition-all transform hover:scale-105 hover:shadow-lg ${selected?.SERVICE_ID === service.SERVICE_ID
+                                ? "ring-4 ring-blue-500 scale-105"
+                                : "ring-0"
                                 }`}
                             onClick={() => setSelected(service)}
                         >
-                            <h3 className="font-semibold">{service.NAME}</h3>
-                            {service.DESCRIPTION && (
-                                <p className="text-gray-600">{service.DESCRIPTION}</p>
-                            )}
-                            <p className="text-gray-800 font-medium">
-                                Cost: ${service.COST} | Duration: {formatDuration(service.DURATION)}
-                            </p>
+                            <ServiceCard service={service} />
                         </div>
                     ))
                 ) : (
-                    <p className="text-gray-500">No services found.</p>
+                    <p className="text-gray-500 col-span-full text-center py-10 text-lg">No services found.</p>
                 )}
             </div>
-
-            <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                {loading ? "Submitting..." : "Request Service"}
-            </button>
         </div>
     );
 }

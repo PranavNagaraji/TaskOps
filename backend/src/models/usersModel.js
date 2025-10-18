@@ -50,7 +50,7 @@ const Users = {
     async getUserByEmail(connection, email) {
         const sql = `SELECT id, name, email, password_hash, role FROM users WHERE email = :email`;
         const result = await connection.execute(sql, [email], { outFormat: oracledb.OUT_FORMAT_OBJECT });
-        return result.rows[0]; // returns user object or undefined
+        return result.rows[0];
     }
 };
 

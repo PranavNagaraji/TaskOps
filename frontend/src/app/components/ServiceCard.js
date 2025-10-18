@@ -1,10 +1,12 @@
 // components/ServiceCard.jsx
 "use client";
 
-export default function ServiceCard({ service }) {
+export default function ServiceCard({ service, onClick }) {
+    const STATUS = service.STATUS.charAt(0).toUpperCase() + service.STATUS.slice(1).toLowerCase();
     return (
         <div
-            className="bg-white flex flex-col rounded-2xl shadow-md p-5 hover:shadow-lg transition justify-between"
+            className="hover:cursor-pointer bg-white flex flex-col rounded-2xl shadow-md p-5 hover:shadow-lg transition justify-between min-h-full"
+            onClick={onClick}
         >
             <div>
                 <h2 className="text-lg font-semibold text-gray-700">{service.NAME}</h2>
@@ -20,12 +22,12 @@ export default function ServiceCard({ service }) {
                 <p>
                     <span className="font-medium">Status:</span>{" "}
                     <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${service.STATUS === "Active"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS === "Active"
                             ? "bg-green-100 text-green-600"
                             : "bg-red-100 text-red-600"
                             }`}
                     >
-                        {service.STATUS}
+                        {STATUS}
                     </span>
                 </p>
             </div>

@@ -1,9 +1,17 @@
-const oracledb=require('oracledb')
+const oracledb = require('oracledb')
 
-async function getAllEmployees(connection){
-    const res=await connection.execute(`SELECT * FROM EMPLOYEES`,
+async function getAllEmployees(connection) {
+    const res = await connection.execute(`SELECT * FROM EMPLOYEES`,
         [],
-        {outFormat:oracledb.OUT_FORMAT_OBJECT}
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    return res.rows;
+}
+
+async function getActiveEmployees(connection) {
+    const res = await connection.execute(`SELECT * FROM EMPLOYEES WHERE STATUS='Active'`,
+        [],
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
     return res.rows;
 }
@@ -26,15 +34,15 @@ async function addEmployee(connection, employee) {
     );
 }
 
-async function updateEmployeeStatus(connection, employeeId){
-    const result=await connection.execute(`UPDATE EMPLOYEES SET STATUS='Inactive' WHERE EMPLOYEE_ID=:employeeId`,
-        {employeeId},
-        {autoCommit:true}
+async function updateEmployeeStatus(connection, employeeId) {
+    const result = await connection.execute(`UPDATE EMPLOYEES SET STATUS='Inactive' WHERE EMPLOYEE_ID=:employeeId`,
+        { employeeId },
+        { autoCommit: true }
     );
-        if(result.rowsAffected===0){
-        return {success:false, message:`No employee found with ID ${employeeId}`};
-    }else{
-        return {success:true, message:`Employee with ID ${employeeId} deleted successfully`};
+    if (result.rowsAffected === 0) {
+        return { success: false, message: `No employee found with ID ${employeeId}` };
+    } else {
+        return { success: true, message: `Employee with ID ${employeeId} deleted successfully` };
     }
 }
 
@@ -44,12 +52,12 @@ async function deleteEmployee(connection, employeeId) {
         { employeeId },
         { autoCommit: true }
     );
-    if(result.rowsAffected===0){
-        return {success:false, message:`No employee found with ID ${employeeId}`};
-    }else{
-        return {success:true, message:`Employee with ID ${employeeId} deleted successfully`};
+    if (result.rowsAffected === 0) {
+        return { success: false, message: `No employee found with ID ${employeeId}` };
+    } else {
+        return { success: true, message: `Employee with ID ${employeeId} deleted successfully` };
     }
 }
 
 
-module.exports={getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee};
+module.exports = { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees };

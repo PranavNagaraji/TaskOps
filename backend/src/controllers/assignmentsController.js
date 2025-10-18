@@ -1,12 +1,26 @@
 const oracledb = require('oracledb');
 const db = require("../config/db");
-const { getAllAssignments, addAssignment, markAssignmentAsCompleted, deleteAssignment, getAssignmentsByEmployee } = require("../models/assignmentsModel")
+const { getAllRequestsAndAssignments, getAllAssignments, addAssignment, markAssignmentAsCompleted, deleteAssignment, getAssignmentsByEmployee } = require("../models/assignmentsModel")
 
 async function getAssignments(req, res) {
     let connection;
     try {
         connection = await oracledb.getConnection(db.config);
         const data = await getAllAssignments(connection);
+        return res.status(200).json(data);
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    } finally {
+        if (connection)
+            await connection.close();
+    }
+}
+
+async function getAllRequestsAndAssignmentsController(req, res) {
+    let connection;
+    try {
+        connection = await oracledb.getConnection(db.config);
+        const data = await getAllRequestsAndAssignments(connection);
         return res.status(200).json(data);
     } catch (err) {
         return res.status(500).json({ error: err.message });
@@ -86,4 +100,4 @@ async function getAssignmentsByEmployeeId(req, res) {
 }
 
 
-module.exports = { getAssignments, addOneAssignment, markCompleted, deleteOneAssignment, getAssignmentsByEmployeeId };
+module.exports = { getAssignments, getAllRequestsAndAssignmentsController, addOneAssignment, markCompleted, deleteOneAssignment, getAssignmentsByEmployeeId };

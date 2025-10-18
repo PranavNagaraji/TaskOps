@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../api/auth/[...nextauth]/route";
 
@@ -18,8 +17,6 @@ async function getAssignedRequests(employeeId) {
 
 export default async function EmployeeDashboard() {
     const session = await getServerSession(authOptions);
-
-    // Redirect or show message if no session
     if (!session || session.user.role !== "employee") {
         return (
             <div className="min-h-screen flex items-center justify-center text-xl font-semibold text-gray-700">
@@ -49,12 +46,6 @@ export default async function EmployeeDashboard() {
                             Here’s an overview of your assigned service requests.
                         </p>
                     </div>
-                    <Link
-                        href="/employee/requests"
-                        className="mt-4 sm:mt-0 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-semibold"
-                    >
-                        All Requests
-                    </Link>
                 </div>
 
                 {/* Stats */}
@@ -70,46 +61,6 @@ export default async function EmployeeDashboard() {
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h3 className="text-gray-500">Completed</h3>
                         <p className="text-3xl font-bold text-green-500">{stats.completed}</p>
-                    </div>
-                </div>
-
-                {/* Assigned Requests Table */}
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-700">
-                        Assigned Requests:
-                    </h2>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full text-left text-sm">
-                            <thead className="border-b bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 font-medium">Customer</th>
-                                    <th className="px-6 py-3 font-medium">Service</th>
-                                    <th className="px-6 py-3 font-medium">Status</th>
-                                    <th className="px-6 py-3 font-medium">Date Assigned</th>
-                                    <th className="px-6 py-3 font-medium">Completed At</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {myAssigned.map((req) => (
-                                    <tr key={req.ASSIGNMENT_ID} className="border-b hover:bg-gray-50">
-                                        <td className="px-6 py-4">{req.CUSTOMER_NAME}</td>
-                                        <td className="px-6 py-4">{req.SERVICE_NAME}</td>
-                                        <td className="px-6 py-4">{req.STATUS}</td>
-                                        <td className="px-6 py-4">{new Date(req.CREATED_AT).toLocaleDateString()}</td>
-                                        <td className="px-6 py-4">
-                                            {req.COMPLETED_AT ? new Date(req.COMPLETED_AT).toLocaleString() : "Not Yet Completed"}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {myAssigned.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} className="text-gray-500 px-6 py-4">
-                                            No assigned requests found.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>

@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 export const authOptions = {
-  // 🔑 1. ADD THE SECRET
   // It links directly to NEXTAUTH_SECRET
   // in .env.local and prevents configuration errors and server crashes.
   secret: process.env.NEXTAUTH_SECRET,
@@ -42,10 +41,8 @@ export const authOptions = {
   pages: { signIn: "/auth/signin" },
 
   callbacks: {
-    // 🚀 2. JWT AND SESSION CALLBACKS
+    // 🚀 JWT AND SESSION CALLBACKS
     async jwt({ token, user }) {
-      // The 'user' object is only available on the first sign-in.
-      // We persist all necessary user data to the token here.
       if (user) {
         token.id = user.id;
         token.name = user.name;

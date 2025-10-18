@@ -1,5 +1,4 @@
 "use client";
-
 import ServiceCard from "@/app/components/ServiceCard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,16 +10,14 @@ export default function AdminServicesPage() {
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const router = useRouter();
 
-    // Check session
     useEffect(() => {
         const checkSession = async () => {
-            const session = await getSession(); // client-safe
+            const session = await getSession();
             setUser(session?.user);
         };
         checkSession();
     }, []);
 
-    // Fetch services
     useEffect(() => {
         const handleGetServices = async () => {
             if (!user || user.role !== "admin") return; // wait for user check
@@ -61,7 +58,7 @@ export default function AdminServicesPage() {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {services.map((service) => (
-                        <ServiceCard key={service.SERVICE_ID} service={service} />
+                        <ServiceCard key={service.SERVICE_ID} service={service} onClick={() => router.push(`/admin/services/editService/${service.SERVICE_ID}`)} />
                     ))}
                 </div>
             )}

@@ -40,7 +40,7 @@ export default function MyAssignmentsPage() {
 
             if (!res.ok) throw new Error("Failed to mark completed");
 
-            // Update UI instantly
+            // Update UI
             setAssignments((prev) =>
                 prev.map((a) =>
                     a.ASSIGNMENT_ID === assignmentId
@@ -78,6 +78,9 @@ export default function MyAssignmentsPage() {
                         <h2 className="text-lg font-medium">{a.SERVICE_NAME}</h2>
                         <p className="text-sm text-gray-600 mt-1">
                             Customer Phone: <b><i>{a.CUSTOMER_PHONE || "N/A"}</i></b>
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                            Customer Email: <b><i>{a.CUSTOMER_EMAIL || "N/A"}</i></b>
                         </p>
                         <p className="text-sm text-gray-600">
                             Cost: ₹{a.COST || "N/A"}

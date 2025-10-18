@@ -9,6 +9,17 @@ async function addRequest(connection, customerId, serviceId) {
     );
 }
 
+async function setUnassignedInProgressToPending(connection) {
+    const updateSql = `
+        UPDATE REQUESTS
+        SET STATUS = 'Pending'
+        WHERE STATUS = 'In Progress'
+          AND REQUEST_ID NOT IN (SELECT REQUEST_ID FROM ASSIGNMENTS)
+    `;
+    const result = await connection.execute(updateSql, [], { autoCommit: true });
+    return result.rowsAffected;
+}
+
 async function updateRequestStatus(connection, requestId, status) {
     await connection.execute(
         `UPDATE REQUESTS
@@ -66,4 +77,4 @@ async function getAllRequestsModel(connection) {
     return result.rows;
 }
 
-module.exports = { getAllRequestsModel, addRequest, updateRequestStatus, deleteRequest, getAllRequestsWithDetails };
+module.exports = { getAllRequestsModel, addRequest, updateRequestStatus, deleteRequest, getAllRequestsWithDetails, setUnassignedInProgressToPending };

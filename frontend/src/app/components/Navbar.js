@@ -19,14 +19,15 @@ export default function Navbar() {
   ];
 
   const employeeLinks = [
+    { href: "/employee/dashboard", label: "Dashboard" },
     { href: "/employee/requests", label: "Requests" },
     { href: "/employee/assignments", label: "My Assignments" },
-    { href: "/employee/dashboard", label: "Dashboard" },
   ];
 
   const customerLinks = [
-    { href: "/requests/new", label: "Add Request" },
     { href: "/customer/dashboard", label: "Dashboard" },
+    { href: "/customer/myRequests", label: "My Requests" },
+    { href: "/requests/new", label: "Add Request" },
   ];
 
   const links =
@@ -45,7 +46,7 @@ export default function Navbar() {
           {/* Brand */}
           <div className="flex-shrink-0">
             <Link href="/" className="text-2xl font-bold text-gray-800">
-              <i>Service Management</i>
+              <i>TaskOps</i>
             </Link>
           </div>
 
@@ -65,7 +66,7 @@ export default function Navbar() {
             {status === "authenticated" && (
               <button
                 onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                className="bg-red-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-600"
+                className="bg-red-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-600 hover:cursor-pointer"
               >
                 Log Out
               </button>
@@ -74,7 +75,7 @@ export default function Navbar() {
             {status === "unauthenticated" && (
               <button
                 onClick={() => signIn({ callbackUrl: "/auth/signin" })}
-                className="bg-green-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-green-600"
+                className="bg-green-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-green-600 hover:cursor-pointer"
               >
                 Log In
               </button>

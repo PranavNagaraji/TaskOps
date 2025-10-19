@@ -7,6 +7,8 @@ export default function MyAssignmentsPage() {
     const { data: session } = useSession();
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isActive, setIsActive] = useState(true);
+    const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
         if (!session?.user?.id) return;
@@ -54,6 +56,34 @@ export default function MyAssignmentsPage() {
         }
     };
 
+    const handleToggleActive = async () => {
+        if (!session?.user?.id) return;
+
+        const hasInProgress = assignments.some(a => a.STATUS === "In Progress");
+        if (hasInProgress) return; // prevent toggle when in-progress assignments exist
+
+        try {
+            setUpdating(true);
+            const res = await fetch("http://localhost:5000/api/employees", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: session.user.id,
+                    status: isActive ? "Inactive" : "Active",
+                }),
+            });
+
+            if (!res.ok) throw new Error("Failed to update active status");
+            setIsActive(!isActive);
+            alert("Employee status updated successfully.");
+        } catch (err) {
+            console.error("Error toggling active status:", err);
+            alert("Failed to update employee status.");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
     if (!session?.user) {
         return <div className="p-6 text-center text-gray-500">Please log in.</div>;
     }
@@ -68,7 +98,28 @@ export default function MyAssignmentsPage() {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-semibold mb-6">My Assignments</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-semibold">My Assignments</h1>
+                <button
+                    onClick={handleToggleActive}
+                    disabled={assignments.some(a => a.STATUS === "In Progress") || updating}
+                    className={`px-4 py-2 rounded-md text-white transition 
+            ${assignments.some(a => a.STATUS === "In Progress")
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : isActive
+                                ? "bg-red-600 hover:bg-red-500"
+                                : "bg-green-600 hover:bg-green-500"
+                        }`}
+                >
+                    {updating
+                        ? "Updating..."
+                        : assignments.some(a => a.STATUS === "In Progress")
+                            ? "Cannot Change Activeness"
+                            : isActive
+                                ? "Set Inactive"
+                                : "Set Active"}
+                </button>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {assignments.map((a) => (
                     <div

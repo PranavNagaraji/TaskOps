@@ -1,6 +1,6 @@
 const oracledb = require('oracledb');
 const db = require('../config/db');
-const { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees } = require('../models/employeesModel');
+const { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees } = require('../models/employeesModel');
 
 async function getEmployees(req, res) {
     let connection;
@@ -30,6 +30,20 @@ async function getActiveEmployeesController(req, res) {
     }
 }
 
+async function getInactiveEmployeesController(req, res) {
+    let connection;
+    try {
+        connection = await oracledb.getConnection(db.config);
+        const data = await getInactiveEmployees(connection);
+        return res.status(200).json(data);
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    } finally {
+        if (connection)
+            await connection.close();
+    }
+}
+
 async function addOneEmployee(req, res) {
     let connection;
     try {
@@ -48,9 +62,9 @@ async function addOneEmployee(req, res) {
 async function updateStatus(req, res) {
     let connection;
     try {
-        const { employeeId } = req.body;
+        const { userId, status } = req.body;
         connection = await oracledb.getConnection(db.config);
-        const result = await updateEmployeeStatus(connection, employeeId);
+        const result = await updateEmployeeStatus(connection, userId, status);
         if (!result.success) {
             return res.status(404).json({ error: result.message });
         }
@@ -81,4 +95,4 @@ async function deleteOneEmployee(req, res) {
     }
 }
 
-module.exports = { getEmployees, addOneEmployee, updateStatus, deleteOneEmployee, getActiveEmployeesController };
+module.exports = { getEmployees, addOneEmployee, updateStatus, deleteOneEmployee, getActiveEmployeesController, getInactiveEmployeesController };

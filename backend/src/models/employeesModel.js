@@ -16,6 +16,14 @@ async function getActiveEmployees(connection) {
     return res.rows;
 }
 
+async function getInactiveEmployees(connection) {
+    const res = await connection.execute(`SELECT * FROM EMPLOYEES WHERE STATUS='Inactive'`,
+        [],
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    return res.rows;
+}
+
 async function addEmployee(connection, employee) {
     const { name, phone, email, role, hireDate, status, user_id } = employee;
     await connection.execute(
@@ -34,9 +42,17 @@ async function addEmployee(connection, employee) {
     );
 }
 
-async function updateEmployeeStatus(connection, employeeId) {
-    const result = await connection.execute(`UPDATE EMPLOYEES SET STATUS='Inactive' WHERE EMPLOYEE_ID=:employeeId`,
-        { employeeId },
+async function updateEmployeeStatus(connection, userId, status) {
+    const res = await connection.execute(`SELECT EMPLOYEE_ID FROM EMPLOYEES WHERE USER_ID=:userId`,
+        { userId },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const employeeId = res.rows[0]?.EMPLOYEE_ID;
+    if (!employeeId) {
+        return { success: false, message: `No employee found for this user` };
+    }
+    const result = await connection.execute(`UPDATE EMPLOYEES SET STATUS=:status WHERE EMPLOYEE_ID=:employeeId`,
+        { status, employeeId },
         { autoCommit: true }
     );
     if (result.rowsAffected === 0) {
@@ -60,4 +76,4 @@ async function deleteEmployee(connection, employeeId) {
 }
 
 
-module.exports = { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees };
+module.exports = { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees };

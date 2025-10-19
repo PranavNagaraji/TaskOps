@@ -26,21 +26,35 @@ export default function AdminEmployeesPage() {
         const fetchEmployees = async () => {
             try {
                 // Fetch active employees
-                const empRes = await fetch(`${apiUrl}/api/employees/active`, { cache: "no-store" });
-                if (!empRes.ok) throw new Error("Failed to fetch employees");
-                const empData = await empRes.json();
+                const activeRes = await fetch(`${apiUrl}/api/employees/active`, { cache: "no-store" });
+                if (!activeRes.ok) throw new Error("Failed to fetch active employees");
+                const activeData = await activeRes.json();
+
+                // Fetch inactive employees
+                const inactiveRes = await fetch(`${apiUrl}/api/employees/inactive`, { cache: "no-store" });
+                const inactiveData = inactiveRes.ok ? await inactiveRes.json() : [];
 
                 // Fetch all assignments
                 const assignRes = await fetch(`${apiUrl}/api/assignments`, { cache: "no-store" });
                 const assignments = assignRes.ok ? await assignRes.json() : [];
 
-                // Map employees with in-progress flag
-                const mapped = empData.map(emp => {
-                    const hasInProgress = assignments.some(a => a.EMPLOYEE_ID === emp.EMPLOYEE_ID && a.STATUS === "In Progress");
-                    return { ...emp, hasInProgress };
+                // Mark active employees
+                const activeMapped = activeData.map(emp => {
+                    const hasInProgress = assignments.some(
+                        a => a.EMPLOYEE_ID === emp.EMPLOYEE_ID && a.STATUS === "In Progress"
+                    );
+                    return { ...emp, hasInProgress, isInactive: false };
                 });
 
-                setEmployees(mapped);
+                // Mark inactive employees
+                const inactiveMapped = inactiveData.map(emp => ({
+                    ...emp,
+                    hasInProgress: false,
+                    isInactive: true,
+                }));
+
+                // Combine both lists
+                setEmployees([...activeMapped, ...inactiveMapped]);
             } catch (err) {
                 console.error(err);
                 setEmployees([]);
@@ -91,7 +105,11 @@ export default function AdminEmployeesPage() {
                     {employees.map(e => (
                         <div
                             key={e.USER_ID}
-                            className={`bg-white rounded-lg shadow p-5 flex flex-col justify-between border-l-4 ${e.hasInProgress ? "border-red-500" : "border-green-500"
+                            className={`bg-white rounded-lg shadow p-5 flex flex-col justify-between border-l-4 ${e.isInactive
+                                ? "border-red-500" // Inactive employee card border
+                                : e.hasInProgress
+                                    ? "border-yellow-500" // Active but has in-progress tasks
+                                    : "border-green-500"  // Active and free
                                 }`}
                         >
                             <div className="space-y-1">
@@ -107,7 +125,6 @@ export default function AdminEmployeesPage() {
                                 className="flex justify-center mt-4 px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors duration-200"
                             >
                                 <Trash2 size={16} className="mr-1" />
-                                Delete
                             </button>
                         </div>
                     ))}

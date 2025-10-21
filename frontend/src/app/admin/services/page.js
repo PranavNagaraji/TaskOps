@@ -35,26 +35,26 @@ export default function AdminServicesPage() {
 
     if (!user || user.role !== "admin") {
         return (
-            <div className="min-h-screen flex items-center justify-center text-xl font-semibold text-gray-700">
+            <div className="min-h-screen flex items-center justify-center text-xl font-semibold text-foreground/80">
                 Please log in to view your dashboard.
             </div>
         );
     }
 
     return (
-        <div className="p-6 min-h-screen bg-gray-50">
+        <div className="p-6 min-h-screen bg-background">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-semibold text-gray-800">Services</h1>
+                <h1 className="text-2xl font-semibold text-foreground">Services</h1>
                 <button
                     onClick={() => router.push("/admin/services/newService")}
-                    className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow-sm hover:cursor-pointer hover:bg-blue-700 hover:shadow-md active:scale-95 transition-all duration-200"
+                    className="px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg shadow-sm hover:cursor-pointer hover:bg-primary/90 hover:shadow-md active:scale-95 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     + Add New Service
                 </button>
             </div>
 
             {services.length === 0 ? (
-                <p className="text-gray-500">No services found.</p>
+                <p className="text-muted-foreground">No services found.</p>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {services.map((service) => (

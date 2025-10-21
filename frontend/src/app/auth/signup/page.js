@@ -91,33 +91,33 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 py-12">
+        <div className="flex items-center justify-center min-h-screen bg-background py-12">
             <form
                 onSubmit={handleSubmit}
-                className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md"
+                className="bg-white p-8 rounded-2xl shadow-sm border border-border w-full max-w-md"
             >
-                <h2 className="text-2xl font-bold mb-6 text-center">Create an Account</h2>
+                <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Create an Account</h2>
 
                 {error && (
-                    <div className="bg-red-500 text-white w-fit text-sm py-1 px-3 rounded-md mb-4">
+                    <div className="bg-destructive text-white w-fit text-sm py-1 px-3 rounded-md mb-4">
                         {error}
                     </div>
                 )}
 
                 {/* --- Common Fields --- */}
-                <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2 mb-4 border rounded" />
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-2 mb-4 border rounded" />
-                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2 mb-4 border rounded" />
-                <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-2 mb-4 border rounded" />
+                <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
 
                 <hr className="my-4" />
 
                 {/* --- Role Selection & Dynamic Fields --- */}
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Your Role</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Select Your Role</label>
                 <select
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full p-2 mb-4 border rounded bg-white"
+                    className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     <option value="customer">Customer</option>
                     <option value="employee">Employee</option>
@@ -130,7 +130,7 @@ export default function SignUpPage() {
                         placeholder="City"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        className="w-full p-2 mb-4 border rounded animate-fade-in"
+                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                 )}
 
@@ -141,17 +141,17 @@ export default function SignUpPage() {
                         placeholder="Employee Role (e.g., Plumber, Electrician, etc.)"
                         value={employeeRole}
                         onChange={(e) => setEmployeeRole(e.target.value)}
-                        className="w-full p-2 mb-4 border rounded animate-fade-in"
+                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                 )}
 
-                <button type="submit" disabled={isLoading} className="w-full mt-4 bg-green-600 text-white p-2 rounded hover:bg-green-700 disabled:bg-gray-400">
+                <button type="submit" disabled={isLoading} className="w-full mt-4 bg-secondary text-secondary-foreground p-2.5 rounded-md font-semibold hover:bg-secondary/90 disabled:bg-muted disabled:text-muted-foreground hover:cursor-pointer">
                     {isLoading ? "Signing Up..." : "Sign Up"}
                 </button>
 
-                <div className="text-center mt-4 text-sm">
+                <div className="text-center mt-4 text-sm text-muted-foreground">
                     Already have an account?{' '}
-                    <Link href="/auth/signin" className="text-blue-600 hover:underline">Sign In</Link>
+                    <Link href="/auth/signin" className="text-primary hover:underline">Sign In</Link>
                 </div>
             </form>
         </div>

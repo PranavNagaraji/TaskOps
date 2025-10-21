@@ -1,26 +1,28 @@
 @import "tailwindcss";
-/* 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+  /* Base palette */
+  --color-background: 248 250 252; /* slate-50 */
+  --color-foreground: 15 23 42;   /* slate-900 */
+  --color-muted: 241 245 249;      /* slate-100 */
+  --color-muted-foreground: 100 116 139; /* slate-500 */
+
+  /* Brand */
+  --color-primary: 79 70 229;      /* indigo-600 */
+  --color-primary-foreground: 255 255 255; /* white */
+  --color-secondary: 16 185 129;   /* emerald-500 */
+  --color-secondary-foreground: 255 255 255;
+  --color-accent: 251 191 36;      /* amber-400 */
+  --color-accent-foreground: 24 24 27; /* zinc-900 */
+
+  /* States */
+  --color-success: 34 197 94;      /* green-500 */
+  --color-warning: 234 179 8;      /* yellow-500 */
+  --color-destructive: 239 68 68;  /* red-500 */
+  --color-border: 226 232 240;     /* slate-200 */
+  --color-ring: 79 70 229;         /* indigo-600 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-} */

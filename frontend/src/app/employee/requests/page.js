@@ -56,7 +56,7 @@ export default function EmployeeRequestsPage() {
 
     if (status === "loading") {
         return (
-            <div className="flex min-h-screen items-center justify-center text-gray-500 text-lg">
+            <div className="flex min-h-screen items-center justify-center text-muted-foreground text-lg">
                 Loading...
             </div>
         );
@@ -64,7 +64,7 @@ export default function EmployeeRequestsPage() {
 
     if (status === "unauthenticated" || !session) {
         return (
-            <div className="flex min-h-screen items-center justify-center text-gray-500 text-lg">
+            <div className="flex min-h-screen items-center justify-center text-muted-foreground text-lg">
                 You must be logged in
             </div>
         );
@@ -74,23 +74,23 @@ export default function EmployeeRequestsPage() {
     const getStatusBadge = (status) => {
         switch (status) {
             case "Pending":
-                return "bg-yellow-100 text-yellow-800";
+                return "bg-warning/10 text-warning";
             case "In Progress":
-                return "bg-blue-100 text-blue-800";
+                return "bg-primary/10 text-primary";
             case "Completed":
-                return "bg-green-100 text-green-800";
+                return "bg-success/10 text-success";
             default:
-                return "bg-gray-100 text-gray-800";
+                return "bg-muted text-foreground";
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <h1 className="text-3xl font-bold mb-6 text-gray-800">Service Requests</h1>
+        <div className="min-h-screen bg-background p-6">
+            <h1 className="text-3xl font-bold mb-6 text-foreground">Service Requests</h1>
 
             <div className="overflow-x-auto">
-                <table className="min-w-full bg-white shadow-lg rounded-lg overflow-hidden">
-                    <thead className="bg-gray-100">
+                <table className="min-w-full bg-white shadow-sm rounded-lg overflow-hidden border border-border">
+                    <thead className="bg-muted/60">
                         <tr>
                             {[
                                 "Customer",
@@ -103,26 +103,26 @@ export default function EmployeeRequestsPage() {
                             ].map((title) => (
                                 <th
                                     key={title}
-                                    className="px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider"
+                                    className="px-6 py-3 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider"
                                 >
                                     {title}
                                 </th>
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-border">
                         {requests.length > 0 ? (
                             requests.map((r) => (
                                 <tr
                                     key={r.REQUEST_ID}
-                                    className="hover:bg-gray-50 transition-colors duration-150"
+                                    className="hover:bg-muted/40 transition-colors duration-150"
                                 >
-                                    <td className="px-6 py-4 text-gray-700 font-medium">
+                                    <td className="px-6 py-4 text-foreground font-medium">
                                         {r.CUSTOMER_NAME || "N/A"}
                                     </td>
-                                    <td className="px-6 py-4 text-gray-700">{r.SERVICE_NAME || "N/A"}</td>
-                                    <td className="px-6 py-4 text-gray-700">{r.CUSTOMER_PHONE || "N/A"}</td>
-                                    <td className="px-6 py-4 text-gray-700">{r.CUSTOMER_ADDRESS || "N/A"}</td>
+                                    <td className="px-6 py-4 text-foreground/80">{r.SERVICE_NAME || "N/A"}</td>
+                                    <td className="px-6 py-4 text-foreground/80">{r.CUSTOMER_PHONE || "N/A"}</td>
+                                    <td className="px-6 py-4 text-foreground/80">{r.CUSTOMER_ADDRESS || "N/A"}</td>
                                     <td className="px-6 py-4">
                                         <span
                                             className={`inline-block px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap ${getStatusBadge(r.STATUS)}`}
@@ -131,7 +131,7 @@ export default function EmployeeRequestsPage() {
                                         </span>
                                     </td>
 
-                                    <td className="px-6 py-4 text-gray-500 text-sm">
+                                    <td className="px-6 py-4 text-muted-foreground text-sm">
                                         {new Date(r.CREATED_AT).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4">
@@ -147,12 +147,12 @@ export default function EmployeeRequestsPage() {
                                                         handleAssign(r.REQUEST_ID);
                                                     }
                                                 }}
-                                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors duration-150 hover:cursor-pointer"
+                                                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors duration-150 hover:cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                             >
                                                 Assign
                                             </button>
                                         ) : (
-                                            <span className="text-gray-600 text-sm">
+                                            <span className="text-muted-foreground text-sm">
                                                 {r.EMPLOYEE_NAME ? `Assigned to ${r.EMPLOYEE_NAME}` : "n/a"}
                                             </span>
                                         )}
@@ -163,7 +163,7 @@ export default function EmployeeRequestsPage() {
                             <tr>
                                 <td
                                     colSpan={7}
-                                    className="text-center py-8 text-gray-400 text-lg font-medium"
+                                    className="text-center py-8 text-muted-foreground text-lg font-medium"
                                 >
                                     No requests found.
                                 </td>

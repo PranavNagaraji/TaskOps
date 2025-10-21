@@ -34,33 +34,33 @@ export default function SignInPage() {
     };
 
     return (
-        <div className="flex h-screen items-center justify-center bg-gray-100">
-            <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-lg w-80">
-                <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+        <div className="flex min-h-screen items-center justify-center bg-background">
+            <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-sm border border-border w-80">
+                <h2 className="text-2xl font-bold mb-4 text-center text-foreground">Login</h2>
                 <input
                     type="email"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full p-2 mb-3 border rounded"
+                    className="w-full p-2.5 mb-3 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <input
                     type="password"
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-2 mb-4 border rounded"
+                    className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <button
                     type="submit"
-                    className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+                    className="w-full bg-primary text-primary-foreground p-2.5 rounded-md font-semibold hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:cursor-pointer"
                 >
                     Sign In
                 </button>
 
-                <div className="text-center mt-4 text-sm">
+                <div className="text-center mt-4 text-sm text-muted-foreground">
                     Don't have an account?{' '}
-                    <Link href="/auth/signup" className="text-blue-600 hover:underline">
+                    <Link href="/auth/signup" className="text-primary hover:underline">
                         Sign Up
                     </Link>
                 </div>

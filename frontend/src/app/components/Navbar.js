@@ -40,24 +40,32 @@ export default function Navbar() {
           : [];
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 left-0 w-full z-50">
+    <nav className="bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-border sticky top-0 left-0 w-full z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand */}
           <div className="flex-shrink-0">
-            <Link href="/" className="text-2xl font-bold text-gray-800">
+            <Link
+              href="/"
+              className="text-2xl font-extrabold tracking-tight text-foreground hover:text-primary transition-colors"
+            >
               <i>TaskOps</i>
             </Link>
           </div>
 
           {/* Desktop Links */}
-          <div className="hidden md:flex items-center space-x-4">
-            {status === "loading" && <div className="text-gray-500">Loading...</div>}
+          <div className="hidden md:flex items-center gap-4">
+            {status === "loading" && (
+              <div className="text-muted-foreground text-sm">Loading...</div>
+            )}
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-gray-700 hover:text-blue-600 font-medium"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${pathname === link.href
+                  ? "text-foreground bg-muted"
+                  : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                  }`}
               >
                 {link.label}
               </Link>
@@ -66,7 +74,7 @@ export default function Navbar() {
             {status === "authenticated" && (
               <button
                 onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                className="bg-red-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-600 hover:cursor-pointer"
+                className="px-4 py-2 rounded-md text-sm font-semibold bg-black text-white hover:bg-gray-800 transition-colors hover:cursor-pointer"
               >
                 Log Out
               </button>
@@ -75,7 +83,7 @@ export default function Navbar() {
             {status === "unauthenticated" && (
               <button
                 onClick={() => signIn({ callbackUrl: "/auth/signin" })}
-                className="bg-green-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-green-600 hover:cursor-pointer"
+                className="px-4 py-2 rounded-md text-sm font-semibold bg-black text-white hover:bg-gray-800 transition-colors hover:cursor-pointer"
               >
                 Log In
               </button>
@@ -84,8 +92,11 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
-            <button onClick={() => setOpen(!open)}>
-              {open ? <X className="w-6 h-6 text-gray-700" /> : <Menu className="w-6 h-6 text-gray-700" />}
+            <button
+              onClick={() => setOpen(!open)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-foreground hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition"
+            >
+              {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
@@ -93,13 +104,16 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden bg-white shadow-md">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="md:hidden bg-white border-b border-border shadow-sm">
+          <div className="px-4 pt-4 pb-3 space-y-2">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600"
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${pathname === link.href
+                  ? "text-foreground bg-muted"
+                  : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                  }`}
               >
                 {link.label}
               </Link>
@@ -108,7 +122,7 @@ export default function Navbar() {
             {status === "authenticated" && (
               <button
                 onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                className="w-full text-left px-3 py-2 rounded-md text-base font-medium bg-red-500 text-white hover:bg-red-600"
+                className="w-full text-left px-3 py-2 rounded-md text-base font-semibold bg-black text-white hover:bg-gray-800 transition-colors"
               >
                 Log Out
               </button>
@@ -117,7 +131,7 @@ export default function Navbar() {
             {status === "unauthenticated" && (
               <button
                 onClick={() => signIn({ callbackUrl: "/auth/signin" })}
-                className="w-full text-left px-3 py-2 rounded-md text-base font-medium bg-green-500 text-white hover:bg-green-600"
+                className="w-full text-left px-3 py-2 rounded-md text-base font-semibold bg-black text-white hover:bg-gray-800 transition-colors"
               >
                 Log In
               </button>

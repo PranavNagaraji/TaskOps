@@ -117,7 +117,13 @@ export default function AdminEmployeesPage() {
                                 <p><span className="font-semibold">Email:</span> {e.EMAIL}</p>
                                 <p><span className="font-semibold">Role:</span> {e.ROLE}</p>
                                 <p><span className="font-semibold">Phone:</span> {e.PHONE}</p>
-                                <p><span className="font-semibold">Status:</span> {e.STATUS}</p>
+                                <p><span className="font-semibold">Status:</span> <span
+                                    className={`px-2 py-1 rounded-lg text-white ${e.STATUS === "Inactive" ? "bg-red-500" : "bg-green-500"
+                                        }`}
+                                >
+                                    <i>{e.STATUS}</i>
+                                </span>
+                                </p>
                                 {e.hasInProgress && <p className="text-red-600 font-semibold">Has in-progress assignments!</p>}
                             </div>
                             <button

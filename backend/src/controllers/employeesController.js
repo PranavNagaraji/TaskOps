@@ -1,6 +1,6 @@
 const oracledb = require('oracledb');
 const db = require('../config/db');
-const { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees } = require('../models/employeesModel');
+const { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees, updateRole } = require('../models/employeesModel');
 
 async function getEmployees(req, res) {
     let connection;
@@ -108,4 +108,24 @@ async function deleteOneEmployee(req, res) {
     }
 }
 
-module.exports = { getEmployees, addOneEmployee, updateStatus, deleteOneEmployee, getActiveEmployeesController, getInactiveEmployeesController };
+async function updateEmployeeRole(req, res) {
+    let connection;
+    try {
+        const { id } = req.params;
+        const { newRole } = req.body;
+        if (!newRole) {
+            return res.status(400).json({ error: 'newRole is required' });
+        }
+        connection = await oracledb.getConnection(db.config);
+        await updateRole(connection, id, newRole);
+        return res.status(200).json({ success: true, message: 'Role updated successfully' });
+    } catch (error) {
+        console.error('Error updating role:', error);
+        return res.status(500).json({ success: false, message: 'Error updating role' });
+    } finally {
+        if (connection)
+            await connection.close();
+    }
+}
+
+module.exports = { getEmployees, addOneEmployee, updateStatus, deleteOneEmployee, getActiveEmployeesController, getInactiveEmployeesController, updateEmployeeRole };

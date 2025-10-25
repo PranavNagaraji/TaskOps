@@ -75,5 +75,13 @@ async function deleteEmployee(connection, employeeId) {
     }
 }
 
+async function updateRole(connection, id, newRole) {
+    const sql = `
+        UPDATE EMPLOYEES
+        SET ROLE = :newRole
+        WHERE EMPLOYEE_ID = :id
+    `;
+    await connection.execute(sql, { id, newRole }, { autoCommit: true });
+}
 
-module.exports = { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees };
+module.exports = { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees, updateRole };

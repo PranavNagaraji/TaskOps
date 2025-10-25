@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../api/auth/[...nextauth]/route";
+import RoleCard from "./RoleCard";
 
 async function getAssignedRequests(employeeId) {
     try {
@@ -27,6 +28,19 @@ export default async function EmployeeDashboard() {
 
     const employeeId = session.user.id;
     const myAssigned = await getAssignedRequests(employeeId);
+
+    async function getEmployeeRecord(userId) {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/employees`, { method: "GET", cache: "no-store" });
+            if (!res.ok) return null;
+            const list = await res.json();
+            return Array.isArray(list) ? list.find(e => String(e.USER_ID) === String(userId)) : null;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    const employeeRecord = await getEmployeeRecord(employeeId);
 
     const stats = {
         total: myAssigned.length,
@@ -63,6 +77,11 @@ export default async function EmployeeDashboard() {
                         <p className="text-3xl font-bold text-green-500">{stats.completed}</p>
                     </div>
                 </div>
+                {employeeRecord && (
+                  <div className="grid grid-cols-1 gap-6 mb-8">
+                    <RoleCard employeeId={employeeRecord.EMPLOYEE_ID} initialRole={employeeRecord.ROLE || ""} />
+                  </div>
+                )}
             </div>
         </div>
     );

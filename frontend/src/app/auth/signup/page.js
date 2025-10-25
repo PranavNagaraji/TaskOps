@@ -13,9 +13,11 @@ export default function SignUpPage() {
     // Role-specific fields
     const [city, setCity] = useState("");
     const [employeeRole, setEmployeeRole] = useState("");
+    const [documentLink, setDocumentLink] = useState("");
     // For UI
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [pendingVerification, setPendingVerification] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async (e) => {
@@ -34,13 +36,14 @@ export default function SignUpPage() {
             endpoint = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers`;
             rolePayload = { name, email, password, phone, address: city };
         } else if (role === "employee") {
-            if (!commonFieldsValid || !employeeRole) {
+            if (!commonFieldsValid || !employeeRole || !documentLink) {
                 setError("Please fill out all required fields.");
                 setIsLoading(false);
                 return;
             }
-            endpoint = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/employees`;
-            rolePayload = { name, email, password, phone, role: employeeRole };
+            // Note: employee flow now uses employee verification endpoint
+            endpoint = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/employee-verification`;
+            rolePayload = { employeeRole: employeeRole, document_link: documentLink };
         } else {
             setError("Invalid role selected.");
             setIsLoading(false);
@@ -71,17 +74,34 @@ export default function SignUpPage() {
             }
             // --- 3. Add the new userId to the role-specific payload ---
             const finalPayload = { ...rolePayload, user_id: userId };
-            // --- 4. Create the customer/employee record linked by userId ---
+            // --- 4. Create the customer/employee-related record linked by userId ---
             const roleRes = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(finalPayload),
             });
-            if (roleRes.ok) {
-                router.push("/auth/signin");
+            if (role === "customer") {
+                if (roleRes.ok) {
+                    router.push("/auth/signin");
+                } else {
+                    const data = await roleRes.json();
+                    setError(data.message || "User account created, but failed to save role details.");
+                }
             } else {
-                const data = await roleRes.json();
-                setError(data.message || "User account created, but failed to save role details.");
+                // Employee verification flow
+                if (roleRes.ok) {
+                    // Success -> verification created -> redirect to dashboard
+                    router.push("/employee/dashboard");
+                } else {
+                    const data = await roleRes.json().catch(() => ({}));
+                    if (roleRes.status === 409) {
+                        // Duplicate/Pending already exists
+                        setPendingVerification(true);
+                        setError("Your account is pending admin approval");
+                    } else {
+                        setError(data.error || data.message || "Failed to submit verification.");
+                    }
+                }
             }
         } catch (error) {
             setError("Error connecting to the server.");
@@ -136,13 +156,28 @@ export default function SignUpPage() {
 
                 {/* Employee-specific Input */}
                 {role === "employee" && (
-                    <input
-                        type="text"
-                        placeholder="Employee Role (e.g., Plumber, Electrician, etc.)"
-                        value={employeeRole}
-                        onChange={(e) => setEmployeeRole(e.target.value)}
-                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
+                    pendingVerification ? (
+                        <div className="w-full p-3 mb-4 rounded-md bg-amber-50 text-amber-800 border border-amber-200 animate-fade-in">
+                            Your account is pending admin approval
+                        </div>
+                    ) : (
+                        <>
+                            <input
+                                type="text"
+                                placeholder="Employee Role (e.g., Plumber, Electrician, etc.)"
+                                value={employeeRole}
+                                onChange={(e) => setEmployeeRole(e.target.value)}
+                                className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            />
+                            <input
+                                type="url"
+                                placeholder="Document link (certificate/license URL)"
+                                value={documentLink}
+                                onChange={(e) => setDocumentLink(e.target.value)}
+                                className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            />
+                        </>
+                    )
                 )}
 
                 <button type="submit" disabled={isLoading} className="w-full mt-4 bg-secondary text-secondary-foreground p-2.5 rounded-md font-semibold hover:bg-secondary/90 disabled:bg-muted disabled:text-muted-foreground hover:cursor-pointer">

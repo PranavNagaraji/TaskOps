@@ -16,6 +16,7 @@ export default function Navbar() {
     { href: "/admin/services", label: "Services" },
     { href: "/admin/customers", label: "Customers" },
     { href: "/admin/employees", label: "Employees" },
+    { href: "/admin/employee-verification", label: "Employee Verification" }
   ];
 
   const employeeLinks = [

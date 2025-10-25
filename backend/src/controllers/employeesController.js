@@ -49,6 +49,19 @@ async function addOneEmployee(req, res) {
     try {
         const employee = req.body;
         connection = await oracledb.getConnection(db.config);
+        // Enforce verification approval before insert
+        if (!employee.user_id) {
+            return res.status(400).json({ error: "user_id is required" });
+        }
+        const vr = await connection.execute(
+            `SELECT STATUS FROM EMPLOYEE_VERIFICATION WHERE USER_ID=:uid ORDER BY VERIFICATION_ID DESC`,
+            { uid: employee.user_id },
+            { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+        const latest = vr.rows[0]?.STATUS;
+        if (latest !== 'Approved') {
+            return res.status(400).json({ error: "Employee not approved for insertion. Please complete verification." });
+        }
         await addEmployee(connection, employee);
         return res.status(201).json({ message: "Data added successfully" });
     } catch (err) {

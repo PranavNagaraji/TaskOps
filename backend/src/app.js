@@ -7,6 +7,7 @@ const employeeRouter = require("./routes/employeesRoute");
 const assignmentRouter = require("./routes/assignmentsRoute");
 const userRouter = require("./routes/usersRoute");
 const authRouter = require("./routes/authRoutes");
+const employeeVerificationRouter = require("./routes/employeeVerificationRoute");
 
 require('dotenv').config();
 
@@ -23,6 +24,7 @@ app.use("/api/employees", employeeRouter);
 app.use("/api/assignments", assignmentRouter);
 app.use("/api/users", userRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/employee-verification", employeeVerificationRouter);
 
 const PORT = process.env.PORT || 5000;
 

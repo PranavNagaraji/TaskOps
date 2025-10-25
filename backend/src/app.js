@@ -5,9 +5,8 @@ const serviceRouter = require("./routes/servicesRoute");
 const requestRouter = require("./routes/requestsRoute");
 const employeeRouter = require("./routes/employeesRoute");
 const assignmentRouter = require("./routes/assignmentsRoute");
-const paymentRouter = require("./routes/paymentsRoute");
 const userRouter = require("./routes/usersRoute");
-const authRouter=require("./routes/authRoutes");
+const authRouter = require("./routes/authRoutes");
 
 require('dotenv').config();
 
@@ -22,7 +21,6 @@ app.use("/api/services", serviceRouter);
 app.use("/api/requests", requestRouter);
 app.use("/api/employees", employeeRouter);
 app.use("/api/assignments", assignmentRouter);
-app.use("/api/payments", paymentRouter);
 app.use("/api/users", userRouter);
 app.use("/api/auth", authRouter);
 

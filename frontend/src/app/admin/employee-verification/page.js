@@ -9,6 +9,11 @@ export default function EmployeeVerificationPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [rejectionMessage, setRejectionMessage] = useState("");
   const [busyById, setBusyById] = useState({}); // { [verificationId]: 'approve' | 'reject' }
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewCandidates, setPreviewCandidates] = useState([]); // array of candidate embed URLs
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [imgZoom, setImgZoom] = useState(1);
 
   useEffect(() => {
     let isMounted = true;
@@ -87,6 +92,68 @@ export default function EmployeeVerificationPage() {
     }
   }
 
+  function isImageUrl(url = "") {
+    return /(\.png|\.jpe?g|\.gif|\.webp|\.bmp|\.svg)(\?.*)?$/i.test(url);
+  }
+
+  function normalizePreviewUrl(url = "") {
+    if (!url) return url;
+    try {
+      // Handle Drive file URL pattern: https://drive.google.com/file/d/FILE_ID/view?... -> uc?export=view&id=FILE_ID
+      const fileMatch = url.match(/https?:\/\/drive\.google\.com\/file\/d\/([^/]+)\//i);
+      if (fileMatch && fileMatch[1]) {
+        const id = fileMatch[1];
+        return `https://drive.google.com/uc?export=view&id=${id}`;
+      }
+      // Handle Drive view/open link with id query: https://drive.google.com/open?id=FILE_ID or .../uc?id=FILE_ID
+      const u = new URL(url);
+      const idParam = u.searchParams.get('id');
+      if (idParam) {
+        return `https://drive.google.com/uc?export=view&id=${idParam}`;
+      }
+    } catch (_) {
+      // fall through; return original url on parse error
+    }
+    return url;
+  }
+
+  // Build list of preview candidates for Drive and other sources
+  // Priority: /preview (Drive embed) -> uc?export=view (normalized) -> original
+  function buildPreviewCandidates(original = "") {
+    const candidates = [];
+    if (!original) return candidates;
+
+    let fileId = null;
+    const fileMatch = original.match(/https?:\/\/drive\.google\.com\/file\/d\/([^/]+)\//i);
+    if (fileMatch && fileMatch[1]) {
+      fileId = fileMatch[1];
+    } else {
+      try {
+        const u = new URL(original);
+        const idParam = u.searchParams.get('id');
+        if (idParam) fileId = idParam;
+      } catch (_) { }
+    }
+
+    if (fileId) {
+      candidates.push(`https://drive.google.com/file/d/${fileId}/preview`);
+    }
+    const norm = normalizePreviewUrl(original);
+    if (!candidates.includes(norm)) candidates.push(norm);
+    if (original && !candidates.includes(original)) candidates.push(original);
+    return candidates;
+  }
+
+  // Helper to detect Google Drive/Docs URLs at render time
+  function isDriveUrl(url = "") {
+    try {
+      const u = new URL(url);
+      return /(^|\.)drive\.google\.com$/.test(u.hostname) || /(^|\.)docs\.google\.com$/.test(u.hostname);
+    } catch (_) {
+      return false;
+    }
+  }
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-semibold text-foreground mb-6">Employee Verification</h1>
@@ -127,7 +194,6 @@ export default function EmployeeVerificationPage() {
                     <div className="text-base font-semibold text-foreground">{v.NAME}</div>
                     <div className="text-sm text-muted-foreground break-all">{v.EMAIL}</div>
                     <div className="text-sm text-muted-foreground">{v.PHONE}</div>
-                    <div className="mt-1 text-sm"><span className="text-muted-foreground">Role:</span> <span className="font-medium">{v.ROLE}</span></div>
                     <div className="mt-1 text-xs inline-flex items-center px-2 py-1 rounded bg-slate-100 text-slate-700 border border-slate-200">Status: {v.STATUS}</div>
                   </div>
                 </div>
@@ -137,15 +203,27 @@ export default function EmployeeVerificationPage() {
                     <div className="text-sm">
                       <span className="text-muted-foreground">Document:</span>{" "}
                       {v.DOCUMENT_LINK ? (
-                        <a
-                          href={v.DOCUMENT_LINK}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline break-all"
-                          onClick={(e) => e.stopPropagation()}
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-md border border-border text-sm text-primary hover:bg-primary/5"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const link = v.DOCUMENT_LINK;
+                            if (isDriveUrl(link)) {
+                              const norm = normalizePreviewUrl(link);
+                              window.open(norm, "_blank", "noopener,noreferrer");
+                              return;
+                            }
+                            const cands = buildPreviewCandidates(link);
+                            setPreviewCandidates(cands);
+                            setPreviewIndex(0);
+                            setImgZoom(1);
+                            setPreviewUrl(cands[0] || "");
+                            setShowPreview(true);
+                          }}
                         >
-                          Open Document
-                        </a>
+                          {isDriveUrl(v.DOCUMENT_LINK) ? "Open in new tab" : "Open Document"}
+                        </button>
                       ) : (
                         <span className="text-muted-foreground">No document provided</span>
                       )}
@@ -176,6 +254,93 @@ export default function EmployeeVerificationPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => { setShowPreview(false); setPreviewUrl(""); }}
+        >
+          <div
+            className="bg-white rounded-xl shadow-lg border border-border w-[92vw] max-w-3xl h-[70vh] p-3 animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="text-xs sm:text-sm text-muted-foreground truncate mr-2">{previewUrl}</div>
+              <div className="flex items-center gap-2">
+                {isImageUrl(previewUrl) && (
+                  <div className="hidden sm:flex items-center gap-1">
+                    <button
+                      type="button"
+                      className="px-2 py-1 rounded border border-border text-xs hover:bg-muted"
+                      onClick={() => setImgZoom(z => Math.max(0.25, +(z - 0.25).toFixed(2)))}
+                    >
+                      -
+                    </button>
+                    <span className="text-xs text-muted-foreground w-10 text-center">{Math.round(imgZoom * 100)}%</span>
+                    <button
+                      type="button"
+                      className="px-2 py-1 rounded border border-border text-xs hover:bg-muted"
+                      onClick={() => setImgZoom(z => Math.min(4, +(z + 0.25).toFixed(2)))}
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      className="px-2 py-1 rounded border border-border text-xs hover:bg-muted"
+                      onClick={() => setImgZoom(1)}
+                    >
+                      Reset
+                    </button>
+                  </div>
+                )}
+                {previewCandidates.length > 1 && (
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-md border border-border text-xs sm:text-sm hover:bg-muted"
+                    onClick={() => {
+                      const next = (previewIndex + 1) % previewCandidates.length;
+                      setPreviewIndex(next);
+                      setPreviewUrl(previewCandidates[next]);
+                    }}
+                  >
+                    Try alternate viewer
+                  </button>
+                )}
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-md border border-border text-xs sm:text-sm hover:bg-muted"
+                >
+                  Open in new tab
+                </a>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 rounded-md border border-border text-xs sm:text-sm hover:bg-muted"
+                  onClick={() => { setShowPreview(false); setPreviewUrl(""); setPreviewCandidates([]); setPreviewIndex(0); setImgZoom(1); }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="w-full h-[calc(100%-2rem)] bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center">
+              {isImageUrl(previewUrl) ? (
+                <div className="w-full h-full flex items-center justify-center overflow-auto">
+                  <img
+                    src={previewUrl}
+                    alt="Document preview"
+                    className="object-contain"
+                    style={{ transform: `scale(${imgZoom})`, transformOrigin: 'center center' }}
+                  />
+                </div>
+              ) : (
+                <iframe src={previewUrl} title="Document preview" className="w-full h-full" />
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -35,8 +35,7 @@ export default function HomePage() {
         </h1>
 
         <p className="text-base sm:text-lg text-gray-200 max-w-xl mx-auto mb-8">
-          Organize. Track. Execute. Empower your team with a streamlined
-          workflow and effortless task management.
+          Organize. Track. Execute.
         </p>
 
         <div className="flex gap-4 justify-center">

@@ -8,6 +8,7 @@ export default function EmployeeVerificationPage() {
   const [expandedId, setExpandedId] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [rejectionMessage, setRejectionMessage] = useState("");
+  const [busyById, setBusyById] = useState({}); // { [verificationId]: 'approve' | 'reject' }
 
   useEffect(() => {
     let isMounted = true;
@@ -42,6 +43,7 @@ export default function EmployeeVerificationPage() {
 
   async function handleApprove(verificationId) {
     clearAlerts();
+    setBusyById(prev => ({ ...prev, [verificationId]: 'approve' }));
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/employee-verification/${verificationId}/approve`, {
         method: "PATCH",
@@ -49,14 +51,18 @@ export default function EmployeeVerificationPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || data.message || `Failed to approve`);
       setItems(prev => prev.filter(v => v.VERIFICATION_ID !== verificationId));
+      if (expandedId === verificationId) setExpandedId(null);
       setSuccessMessage("Employee verification approved successfully.");
     } catch (err) {
       setError(err.message || "Failed to approve");
+    } finally {
+      setBusyById(prev => ({ ...prev, [verificationId]: undefined }));
     }
   }
 
   async function handleReject(verificationId, userId) {
     clearAlerts();
+    setBusyById(prev => ({ ...prev, [verificationId]: 'reject' }));
     try {
       // First delete the User via existing Users backend flow
       const del = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`, { method: "DELETE" });
@@ -66,12 +72,18 @@ export default function EmployeeVerificationPage() {
       // Then reject the verification via existing route
       const rej = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/employee-verification/${verificationId}/reject`, { method: "PATCH" });
       const rejData = await rej.json().catch(() => ({}));
-      if (!rej.ok) throw new Error(rejData.error || rejData.message || "Failed to reject verification");
+      // If verification was already removed (e.g., by cascade/another process), treat 404 as success to avoid false error
+      if (!rej.ok && rej.status !== 404) {
+        throw new Error(rejData.error || rejData.message || "Failed to reject verification");
+      }
 
       setItems(prev => prev.filter(v => v.VERIFICATION_ID !== verificationId));
+      if (expandedId === verificationId) setExpandedId(null);
       setRejectionMessage("Employee verification rejected.");
     } catch (err) {
       setError(err.message || "Failed to reject verification");
+    } finally {
+      setBusyById(prev => ({ ...prev, [verificationId]: undefined }));
     }
   }
 
@@ -142,17 +154,19 @@ export default function EmployeeVerificationPage() {
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center px-3 py-2 rounded-md text-white text-sm"
+                        className="inline-flex items-center justify-center px-3 py-2 rounded-md text-white text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                         style={{ backgroundColor: "#22c55e" }}
-                        onClick={(e) => { e.stopPropagation(); handleApprove(v.VERIFICATION_ID); }}
+                        disabled={!!busyById[v.VERIFICATION_ID]}
+                        onClick={(e) => { e.stopPropagation(); if (!busyById[v.VERIFICATION_ID]) handleApprove(v.VERIFICATION_ID); }}
                       >
                         Approve
                       </button>
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center px-3 py-2 rounded-md text-white text-sm"
+                        className="inline-flex items-center justify-center px-3 py-2 rounded-md text-white text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                         style={{ backgroundColor: "#ef4444" }}
-                        onClick={(e) => { e.stopPropagation(); handleReject(v.VERIFICATION_ID, v.USER_ID); }}
+                        disabled={!!busyById[v.VERIFICATION_ID]}
+                        onClick={(e) => { e.stopPropagation(); if (!busyById[v.VERIFICATION_ID]) handleReject(v.VERIFICATION_ID, v.USER_ID); }}
                       >
                         Reject
                       </button>

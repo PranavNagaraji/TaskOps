@@ -139,21 +139,21 @@ export default function EmployeeRequestsPage() {
                                             <button
                                                 disabled={loading}
                                                 onClick={() => {
-                                                    if (
-                                                        confirm(
-                                                            "Do you want to assign this request to yourself?"
-                                                        )
-                                                    ) {
+                                                    if (confirm("Do you want to assign this request to yourself?")) {
                                                         handleAssign(r.REQUEST_ID);
                                                     }
                                                 }}
-                                                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors duration-150 hover:cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                className="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 shadow-sm"
                                             >
                                                 Assign
                                             </button>
                                         ) : (
-                                            <span className="text-muted-foreground text-sm">
-                                                {r.EMPLOYEE_NAME ? `Assigned to ${r.EMPLOYEE_NAME}` : "n/a"}
+                                            <span className="text-gray-700 text-sm font-medium">
+                                                {r.EMPLOYEE_NAME ? (
+                                                    <span className="text-green-700">{`Assigned to ${r.EMPLOYEE_NAME}`}</span>
+                                                ) : (
+                                                    "n/a"
+                                                )}
                                             </span>
                                         )}
                                     </td>

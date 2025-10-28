@@ -22,30 +22,31 @@ export default function EmployeeAccessProvider({ children }) {
           return;
         }
 
-        // Then check if they exist in the employees table
-        const response = await fetch(`/api/employees/user/${session.user.id}`);
+        // Then check if they exist in the employees table (call backend, not Next.js API)
+        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+        const response = await fetch(`${baseUrl}/api/employees/user/${session.user.id}`, { cache: 'no-store' });
 
         if (!response.ok) {
           // If we get a 404, the employee doesn't exist
           if (response.status === 404) {
             setIsEmployee(false);
-            return;
+          } else {
+            setIsEmployee(true);
           }
-          // For other errors, throw an exception
-          throw new Error('Failed to verify employee status');
-        }
-
-        const data = await response.json();
-        if (!data.exists) {
-          // Employee not found in the employees table
-          setIsEmployee(false);
         } else {
-          // Employee exists and is verified
-          setIsEmployee(true);
+          const data = await response.json();
+          if (!data.exists) {
+            // Employee not found in the employees table
+            setIsEmployee(false);
+          } else {
+            // Employee exists and is verified
+            setIsEmployee(true);
+          }
         }
       } catch (error) {
         console.error('Error checking employee status:', error);
-        setIsEmployee(false);
+        // Do not block access on transient/network errors; only a definite 404 should deny
+        setIsEmployee(true);
       } finally {
         setIsLoading(false);
       }

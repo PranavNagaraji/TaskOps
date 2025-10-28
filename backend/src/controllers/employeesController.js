@@ -1,6 +1,6 @@
 const oracledb = require('oracledb');
 const db = require('../config/db');
-const { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees, updateRole } = require('../models/employeesModel');
+const { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees, updateRole, getEmployeeByUserId } = require('../models/employeesModel');
 
 async function getEmployees(req, res) {
     let connection;
@@ -128,4 +128,39 @@ async function updateEmployeeRole(req, res) {
     }
 }
 
-module.exports = { getEmployees, addOneEmployee, updateStatus, deleteOneEmployee, getActiveEmployeesController, getInactiveEmployeesController, updateEmployeeRole };
+async function getEmployeeByUserIdController(req, res) {
+    let connection;
+    try {
+        const { userId } = req.params;
+        connection = await oracledb.getConnection(db.config);
+        const employee = await getEmployeeByUserId(connection, userId);
+        
+        if (!employee) {
+            return res.status(404).json({ exists: false });
+        }
+        
+        return res.status(200).json({ exists: true, employee });
+    } catch (err) {
+        console.error('Error checking employee by user ID:', err);
+        return res.status(500).json({ error: err.message });
+    } finally {
+        if (connection) {
+            try {
+                await connection.close();
+            } catch (err) {
+                console.error('Error closing connection:', err);
+            }
+        }
+    }
+}
+
+module.exports = { 
+    getEmployees, 
+    addOneEmployee, 
+    updateStatus, 
+    deleteOneEmployee, 
+    getActiveEmployeesController, 
+    getInactiveEmployeesController, 
+    updateEmployeeRole,
+    getEmployeeByUserIdController 
+};

@@ -84,4 +84,22 @@ async function updateRole(connection, id, newRole) {
     await connection.execute(sql, { id, newRole }, { autoCommit: true });
 }
 
-module.exports = { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees, updateRole };
+async function getEmployeeByUserId(connection, userId) {
+    const result = await connection.execute(
+        `SELECT * FROM EMPLOYEES WHERE USER_ID = :userId`,
+        [userId],
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    return result.rows[0] || null;
+}
+
+module.exports = { 
+    getAllEmployees, 
+    addEmployee, 
+    updateEmployeeStatus, 
+    deleteEmployee, 
+    getActiveEmployees, 
+    getInactiveEmployees, 
+    updateRole,
+    getEmployeeByUserId 
+};

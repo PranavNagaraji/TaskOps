@@ -17,7 +17,8 @@ async function submitVerification(req, res) {
     }
 
     connection = await oracledb.getConnection(db.config);
-    const result = await createVerification(connection, { user_id, document_link });
+    const role = req.body.employeeRole || req.body.role || null;
+    const result = await createVerification(connection, { user_id, document_link, role });
     if (!result.success) {
       return res.status(result.code || 400).json({ error: result.message });
     }

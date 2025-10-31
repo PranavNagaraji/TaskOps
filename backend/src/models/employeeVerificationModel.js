@@ -29,7 +29,7 @@ async function getEmployeeByUserId(connection, userId) {
     return result.rows[0]?.EMPLOYEE_ID;
 }
 
-async function insertEmployeeFromUser(connection, user) {
+async function insertEmployeeFromUser(connection, user, roleOverride) {
     const result = await connection.execute(
         `INSERT INTO EMPLOYEES (NAME, PHONE, EMAIL, ROLE, HIRE_DATE, STATUS, USER_ID)
          VALUES (:name, :phone, :email, :role, SYSDATE, :status, :user_id)
@@ -38,7 +38,7 @@ async function insertEmployeeFromUser(connection, user) {
             name: user.NAME,
             phone: user.PHONE,
             email: user.EMAIL,
-            role: user.ROLE || 'Employee',
+            role: roleOverride || user.ROLE || 'Employee',
             status: 'Active',
             user_id: user.ID,
             new_emp_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
@@ -48,7 +48,7 @@ async function insertEmployeeFromUser(connection, user) {
     return result.outBinds.new_emp_id[0];
 }
 
-async function createVerification(connection, { user_id, document_link }) {
+async function createVerification(connection, { user_id, document_link, role }) {
     const user = await userExists(connection, user_id);
     if (!user) return { success: false, code: 404, message: 'USER_ID not found' };
 
@@ -56,10 +56,10 @@ async function createVerification(connection, { user_id, document_link }) {
     if (dup) return { success: false, code: 409, message: 'Verification already exists for this user' };
 
     const result = await connection.execute(
-        `INSERT INTO EMPLOYEE_VERIFICATION (USER_ID, STATUS, DOCUMENT_LINK)
-         VALUES (:user_id, 'Pending', :document_link)
+        `INSERT INTO EMPLOYEE_VERIFICATION (USER_ID, STATUS, DOCUMENT_LINK, ROLE)
+         VALUES (:user_id, 'Pending', :document_link, :role)
          RETURNING VERIFICATION_ID INTO :vid`,
-        { user_id, document_link, vid: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
+        { user_id, document_link, role, vid: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
         { autoCommit: true }
     );
     return { success: true, verificationId: result.outBinds.vid[0] };
@@ -67,7 +67,7 @@ async function createVerification(connection, { user_id, document_link }) {
 
 async function getPendingVerifications(connection) {
     const result = await connection.execute(
-        `SELECT EV.VERIFICATION_ID, EV.USER_ID, EV.STATUS, EV.DOCUMENT_LINK,
+        `SELECT EV.VERIFICATION_ID, EV.USER_ID, EV.STATUS, EV.DOCUMENT_LINK, EV.ROLE AS VERIFICATION_ROLE,
                 U.NAME, U.EMAIL, U.ROLE, U.PHONE
          FROM EMPLOYEE_VERIFICATION EV
          JOIN USERS U ON U.ID = EV.USER_ID
@@ -81,7 +81,7 @@ async function getPendingVerifications(connection) {
 
 async function approveVerification(connection, verificationId) {
     const verRes = await connection.execute(
-        `SELECT VERIFICATION_ID, USER_ID, STATUS FROM EMPLOYEE_VERIFICATION WHERE VERIFICATION_ID = :id FOR UPDATE`,
+        `SELECT VERIFICATION_ID, USER_ID, STATUS, ROLE FROM EMPLOYEE_VERIFICATION WHERE VERIFICATION_ID = :id FOR UPDATE`,
         { id: verificationId },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
@@ -93,7 +93,16 @@ async function approveVerification(connection, verificationId) {
     if (!user) return { success: false, code: 404, message: 'User not found for this verification' };
 
     let employeeId = await getEmployeeByUserId(connection, ver.USER_ID);
-    if (!employeeId) employeeId = await insertEmployeeFromUser(connection, user);
+    if (!employeeId) {
+        employeeId = await insertEmployeeFromUser(connection, user, ver.ROLE);
+    } else if (ver.ROLE) {
+        // Ensure existing employee role matches verification role
+        await connection.execute(
+            `UPDATE EMPLOYEES SET ROLE = :role WHERE EMPLOYEE_ID = :employeeId`,
+            { role: ver.ROLE, employeeId },
+            { autoCommit: true }
+        );
+    }
 
     await connection.execute(
         `UPDATE EMPLOYEE_VERIFICATION 

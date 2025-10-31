@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 import { getSession } from "next-auth/react";
 import Link from "next/link";
+import ChatModal from "../../components/ChatModal";
 
 export default function MyRequests() {
     const [myRequests, setMyRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState(null);
+    const [userName, setUserName] = useState("");
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatReq, setChatReq] = useState(null);
 
     useEffect(() => {
         async function fetchData() {
@@ -17,6 +21,7 @@ export default function MyRequests() {
                 return;
             }
             setUserId(session.user.id);
+            setUserName(session.user.name || "");
 
             try {
                 const resRequests = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/requests/all`);
@@ -86,7 +91,16 @@ export default function MyRequests() {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {myRequests.map((request) => (
-                                    <tr key={request.REQUEST_ID} className="hover:bg-gray-50 transition">
+                                    <tr
+                                        key={request.REQUEST_ID}
+                                        className={`hover:bg-gray-50 transition ${request.STATUS === "In Progress" ? "cursor-pointer" : ""}`}
+                                        onClick={() => {
+                                            if (request.STATUS === "In Progress") {
+                                                setChatReq(request);
+                                                setChatOpen(true);
+                                            }
+                                        }}
+                                    >
                                         <td className="px-6 py-4 text-gray-800 font-medium">{request.SERVICE_NAME}</td>
                                         <td className="px-6 py-4 text-gray-700">₹{request.COST}</td>
                                         <td className={`px-6 py-4 font-semibold ${request.STATUS === "Completed" ? "text-green-500" : request.STATUS === "In Progress" ? "text-blue-500" : "text-yellow-500"}`}>
@@ -100,6 +114,13 @@ export default function MyRequests() {
                                                     className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition hover:cursor-pointer"
                                                 >
                                                     Delete
+                                                </button>
+                                            ) : request.STATUS === "In Progress" ? (
+                                                <button
+                                                    onClick={() => { setChatReq(request); setChatOpen(true); }}
+                                                    className="bg-slate-800 text-white px-3 py-1 rounded-md hover:bg-slate-900 transition hover:cursor-pointer"
+                                                >
+                                                    Open Chat
                                                 </button>
                                             ) : (
                                                 <button
@@ -119,6 +140,23 @@ export default function MyRequests() {
                     )}
                 </div>
             </div>
+            {chatOpen && chatReq && (
+                <ChatModal
+                    isOpen={chatOpen}
+                    onClose={() => { setChatOpen(false); setChatReq(null); }}
+                    requestId={chatReq.REQUEST_ID}
+                    userId={userId}
+                    userType="customer"
+                    userName={userName}
+                    title={`Chat with ${chatReq.EMPLOYEE_NAME || 'Employee'}`}
+                    subtitle={chatReq.SERVICE_NAME || ''}
+                />
+            )}
         </div>
     );
+}
+
+// Chat modal host
+export function ChatHost() {
+    return null;
 }

@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import ChatModal from "../../components/ChatModal";
 
 export default function EmployeeRequestsPage() {
     const { data: session, status } = useSession();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatReq, setChatReq] = useState(null); // current request row for chat
 
     useEffect(() => {
         if (status === "authenticated") fetchRequests();
@@ -135,19 +138,20 @@ export default function EmployeeRequestsPage() {
                                         {new Date(r.CREATED_AT).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4">
-                                        {r.STATUS === "Pending" ? (
-                                            <button
-                                                disabled={loading}
-                                                onClick={() => {
-                                                    if (confirm("Do you want to assign this request to yourself?")) {
-                                                        handleAssign(r.REQUEST_ID);
-                                                    }
-                                                }}
-                                                className="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 shadow-sm"
-                                            >
-                                                Assign
-                                            </button>
-                                        ) : (
+                                    {r.STATUS === "Pending" ? (
+                                        <button
+                                            disabled={loading}
+                                            onClick={() => {
+                                                if (confirm("Do you want to assign this request to yourself?")) {
+                                                    handleAssign(r.REQUEST_ID);
+                                                }
+                                            }}
+                                            className="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 shadow-sm"
+                                        >
+                                            Assign
+                                        </button>
+                                    ) : (
+                                        <div className="flex items-center gap-3">
                                             <span className="text-gray-700 text-sm font-medium">
                                                 {r.EMPLOYEE_NAME ? (
                                                     <span className="text-green-700">{`Assigned to ${r.EMPLOYEE_NAME}`}</span>
@@ -155,8 +159,17 @@ export default function EmployeeRequestsPage() {
                                                     "n/a"
                                                 )}
                                             </span>
-                                        )}
-                                    </td>
+                                            {r.STATUS === "In Progress" && (
+                                                <button
+                                                    onClick={() => { setChatReq(r); setChatOpen(true); }}
+                                                    className="px-3 py-1.5 rounded-lg font-medium bg-slate-800 text-white hover:bg-slate-900 transition"
+                                                >
+                                                    Open Chat
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </td>
                                 </tr>
                             ))
                         ) : (
@@ -172,6 +185,24 @@ export default function EmployeeRequestsPage() {
                     </tbody>
                 </table>
             </div>
+            {chatOpen && chatReq && (
+                <ChatModal
+                    isOpen={chatOpen}
+                    onClose={() => { setChatOpen(false); setChatReq(null); }}
+                    requestId={chatReq.REQUEST_ID}
+                    userId={session.user.id}
+                    userType="employee"
+                    userName={session.user.name}
+                    title={`Chat with ${chatReq.CUSTOMER_NAME || 'Customer'}`}
+                    subtitle={chatReq.SERVICE_NAME || ''}
+                />
+            )}
         </div>
     );
+}
+
+{/* Chat Modal */}
+{/* Render at root of component file */}
+export function ChatHostWrapper() {
+    return null;
 }

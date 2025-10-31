@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import ChatModal from "../../components/ChatModal";
 
 export default function MyAssignmentsPage() {
     const { data: session } = useSession();
@@ -9,6 +10,8 @@ export default function MyAssignmentsPage() {
     const [loading, setLoading] = useState(true);
     const [isActive, setIsActive] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatItem, setChatItem] = useState(null);
 
     useEffect(() => {
         if (!session?.user?.id) return;
@@ -166,9 +169,29 @@ export default function MyAssignmentsPage() {
                                 Mark as Completed
                             </button>
                         )}
+                        {a.STATUS === "In Progress" && (
+                            <button
+                                onClick={() => { setChatItem(a); setChatOpen(true); }}
+                                className="mt-2 w-full bg-slate-800 text-white py-2 rounded-md hover:bg-slate-900 transition"
+                            >
+                                Open Chat
+                            </button>
+                        )}
                     </div>
                 ))}
             </div>
+            {chatOpen && chatItem && (
+                <ChatModal
+                    isOpen={chatOpen}
+                    onClose={() => { setChatOpen(false); setChatItem(null); }}
+                    requestId={chatItem.REQUEST_ID}
+                    userId={session?.user?.id}
+                    userType="employee"
+                    userName={session?.user?.name || ""}
+                    title={`Chat with ${chatItem.CUSTOMER_NAME || 'Customer'}`}
+                    subtitle={chatItem.SERVICE_NAME || ''}
+                />
+            )}
         </div>
     );
 }

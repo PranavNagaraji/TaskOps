@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../api/auth/[...nextauth]/route";
-import RoleCard from "./RoleCard";
+ 
 
 async function getAssignedRequests(employeeId) {
     try {
@@ -79,7 +79,10 @@ export default async function EmployeeDashboard() {
                 </div>
                 {employeeRecord && (
                   <div className="grid grid-cols-1 gap-6 mb-8">
-                    <RoleCard employeeId={employeeRecord.EMPLOYEE_ID} initialRole={employeeRecord.ROLE || ""} />
+                    <div className="bg-white p-6 rounded-lg shadow-md border">
+                      <h3 className="text-gray-500">Role</h3>
+                      <p className="text-2xl font-semibold text-gray-800">{employeeRecord.ROLE || "Not set"}</p>
+                    </div>
                   </div>
                 )}
             </div>

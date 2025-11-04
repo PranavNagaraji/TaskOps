@@ -47,6 +47,10 @@ export default async function EmployeeDashboard() {
         inProgress: myAssigned.filter(r => r.STATUS !== "Completed").length,
         completed: myAssigned.filter(r => r.STATUS === "Completed").length,
     };
+    // Sum COST for completed requests as total earnings
+    const totalEarnings = myAssigned
+        .filter(r => r.STATUS === "Completed")
+        .reduce((sum, r) => sum + (Number(r.COST) || 0), 0);
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -63,7 +67,7 @@ export default async function EmployeeDashboard() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h3 className="text-gray-500">Total Assigned</h3>
                         <p className="text-3xl font-bold text-gray-800">{stats.total}</p>
@@ -75,6 +79,10 @@ export default async function EmployeeDashboard() {
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h3 className="text-gray-500">Completed</h3>
                         <p className="text-3xl font-bold text-green-500">{stats.completed}</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                        <h3 className="text-gray-500">Total Earnings</h3>
+                        <p className="text-3xl font-bold text-blue-600">₹{totalEarnings.toFixed(2)}</p>
                     </div>
                 </div>
                 {employeeRecord && (

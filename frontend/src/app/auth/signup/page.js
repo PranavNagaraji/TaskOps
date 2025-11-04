@@ -18,12 +18,76 @@ export default function SignUpPage() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [pendingVerification, setPendingVerification] = useState(false);
+    const [step, setStep] = useState(1);
+    const [otpSent, setOtpSent] = useState(false);
+    const [otpVerified, setOtpVerified] = useState(false);
+    const [otp, setOtp] = useState("");
     const router = useRouter();
+
+    const handleSendOtp = async (e) => {
+        e.preventDefault();
+        setError("");
+        if (!email) {
+            setError("Please enter your email first.");
+            return;
+        }
+        try {
+            setIsLoading(true);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/otp/send`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                setError(data.message || "Failed to send OTP.");
+                return;
+            }
+            setOtpSent(true);
+        } catch (_) {
+            setError("Error connecting to the server.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setError("");
+        if (!otp) {
+            setError("Please enter the OTP sent to your email.");
+            return;
+        }
+        try {
+            setIsLoading(true);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/otp/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                setError(data.message || "Invalid or expired OTP.");
+                return;
+            }
+            setOtpVerified(true);
+            setStep(2);
+        } catch (_) {
+            setError("Error connecting to the server.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
         setIsLoading(true);
+        if (!otpVerified) {
+            setError("Please verify your email via OTP first.");
+            setIsLoading(false);
+            return;
+        }
         const commonFieldsValid = name && email && password && phone;
         let endpoint = "";
         let rolePayload = {};
@@ -124,65 +188,98 @@ export default function SignUpPage() {
                     </div>
                 )}
 
-                {/* --- Common Fields --- */}
-                <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-                <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-
-                <hr className="my-4" />
-
-                {/* --- Role Selection & Dynamic Fields --- */}
-                <label className="block text-sm font-medium text-foreground mb-2">Select Your Role</label>
-                <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                    <option value="customer">Customer</option>
-                    <option value="employee">Employee</option>
-                </select>
-
-                {/* Customer-specific Input */}
-                {role === "customer" && (
-                    <input
-                        type="text"
-                        placeholder="City"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
+                {/* Step 1: Only Email and OTP */}
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={otpVerified}
+                    className="w-full p-2.5 mb-2 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:bg-muted disabled:text-muted-foreground"
+                />
+                {step === 1 && (
+                    <>
+                        {!otpSent && (
+                            <button type="button" onClick={handleSendOtp} disabled={isLoading || !email} className="w-full mb-4 bg-secondary text-secondary-foreground p-2.5 rounded-md font-semibold hover:bg-secondary/90 disabled:bg-muted disabled:text-muted-foreground hover:cursor-pointer">
+                                {isLoading ? "Sending OTP..." : "Send OTP"}
+                            </button>
+                        )}
+                        {otpSent && !otpVerified && (
+                            <div className="mt-1 mb-3">
+                                <div className="text-sm text-muted-foreground mb-2">OTP sent to your email</div>
+                                <input type="text" placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full p-2.5 mb-2 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                                <button type="button" onClick={handleVerifyOtp} disabled={isLoading || !otp} className="w-full bg-secondary text-secondary-foreground p-2.5 rounded-md font-semibold hover:bg-secondary/90 disabled:bg-muted disabled:text-muted-foreground hover:cursor-pointer">
+                                    {isLoading ? "Verifying..." : "Verify OTP"}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
 
-                {/* Employee-specific Input */}
-                {role === "employee" && (
-                    pendingVerification ? (
-                        <div className="w-full p-3 mb-4 rounded-md bg-amber-50 text-amber-800 border border-amber-200 animate-fade-in">
-                            Your account is pending admin approval
-                        </div>
-                    ) : (
-                        <>
+                {/* Step 2: Full form after verification */}
+                {step === 2 && (
+                    <>
+                        <div className="text-green-600 text-sm mb-3">Email verified</div>
+                        <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                        <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+
+                        <hr className="my-4" />
+
+                        {/* --- Role Selection & Dynamic Fields --- */}
+                        <label className="block text-sm font-medium text-foreground mb-2">Select Your Role</label>
+                        <select
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            <option value="customer">Customer</option>
+                            <option value="employee">Employee</option>
+                        </select>
+
+                        {/* Customer-specific Input */}
+                        {role === "customer" && (
                             <input
                                 type="text"
-                                placeholder="Employee Role (e.g., Plumber, Electrician, etc.)"
-                                value={employeeRole}
-                                onChange={(e) => setEmployeeRole(e.target.value)}
+                                placeholder="City"
+                                value={city}
+                                onChange={(e) => setCity(e.target.value)}
                                 className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             />
-                            <input
-                                type="url"
-                                placeholder="Document link (certificate/license URL)"
-                                value={documentLink}
-                                onChange={(e) => setDocumentLink(e.target.value)}
-                                className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            />
-                        </>
-                    )
-                )}
+                        )}
 
-                <button type="submit" disabled={isLoading} className="w-full mt-4 bg-secondary text-secondary-foreground p-2.5 rounded-md font-semibold hover:bg-secondary/90 disabled:bg-muted disabled:text-muted-foreground hover:cursor-pointer">
-                    {isLoading ? "Signing Up..." : "Sign Up"}
-                </button>
+                        {/* Employee-specific Input */}
+                        {role === "employee" && (
+                            pendingVerification ? (
+                                <div className="w-full p-3 mb-4 rounded-md bg-amber-50 text-amber-800 border border-amber-200 animate-fade-in">
+                                    Your account is pending admin approval
+                                </div>
+                            ) : (
+                                <>
+                                    <input
+                                        type="text"
+                                        placeholder="Employee Role (e.g., Plumber, Electrician, etc.)"
+                                        value={employeeRole}
+                                        onChange={(e) => setEmployeeRole(e.target.value)}
+                                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    />
+                                    <input
+                                        type="url"
+                                        placeholder="Document link (certificate/license URL)"
+                                        value={documentLink}
+                                        onChange={(e) => setDocumentLink(e.target.value)}
+                                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    />
+                                </>
+                            )
+                        )}
+
+                        <button type="submit" disabled={isLoading || !otpVerified} className="w-full mt-4 bg-secondary text-secondary-foreground p-2.5 rounded-md font-semibold hover:bg-secondary/90 disabled:bg-muted disabled:text-muted-foreground hover:cursor-pointer">
+                            {isLoading ? "Signing Up..." : (!otpVerified ? "Verify Email to Continue" : "Sign Up")}
+                        </button>
+
+                    </>
+                )}
 
                 <div className="text-center mt-4 text-sm text-muted-foreground">
                     Already have an account?{' '}
@@ -192,4 +289,3 @@ export default function SignUpPage() {
         </div>
     );
 }
-

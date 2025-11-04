@@ -124,8 +124,12 @@ export default function SignUpPage() {
             });
 
             if (!userRes.ok) {
-                const data = await userRes.json();
-                setError(data.message || "Failed to create user account.");
+                const data = await userRes.json().catch(() => ({}));
+                if (userRes.status === 409 || (data && /already exists/i.test(data.message || ''))) {
+                    setError("User with this email already exists");
+                } else {
+                    setError(data.message || "Failed to create user account.");
+                }
                 setIsLoading(false);
                 return;
             }

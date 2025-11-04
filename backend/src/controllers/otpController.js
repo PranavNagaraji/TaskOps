@@ -1,6 +1,7 @@
 const oracledb = require('oracledb');
 const db = require('../config/db');
 const otpModel = require('../models/otpModel');
+const Users = require('../models/usersModel');
 const mailSender = require('../utils/mailSender');
 
 function generateOtp() {
@@ -14,6 +15,11 @@ async function sendOtp(req, res) {
     if (!email) return res.status(400).json({ message: 'Email is required' });
 
     connection = await oracledb.getConnection(db.config);
+    // Block OTP for emails that already have an account
+    const existing = await Users.getUserByEmail(connection, email);
+    if (existing) {
+      return res.status(409).json({ message: 'User with this email already exists' });
+    }
     await otpModel.deleteExpired(connection);
     await otpModel.invalidateExisting(connection, email);
     const otp = generateOtp();

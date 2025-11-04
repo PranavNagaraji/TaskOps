@@ -16,6 +16,12 @@ async function addUser(req, res) {
       return res.status(400).json({ message: "Email not verified. Please verify OTP before signing up." });
     }
 
+    // Prevent duplicate accounts for the same email
+    const existing = await Users.getUserByEmail(connection, email);
+    if (existing) {
+      return res.status(409).json({ message: "User with this email already exists" });
+    }
+
     const password_hash = await bcrypt.hash(password, 10);
     const newUserId = await Users.addUser(connection, { name, email, password_hash, role, phone });
     res.status(201).json({

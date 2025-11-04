@@ -33,8 +33,14 @@ export default function NewRequestPage() {
                     : Array.isArray(data.services)
                         ? data.services
                         : [];
-                setServices(servicesArray);
-                setFiltered(servicesArray);
+                // Keep both active and inactive, but sort active first for display
+                const sorted = [...servicesArray].sort((a, b) => {
+                    const aActive = String((a.STATUS ?? a.status) || "").toLowerCase() === "active";
+                    const bActive = String((b.STATUS ?? b.status) || "").toLowerCase() === "active";
+                    return Number(bActive) - Number(aActive);
+                });
+                setServices(sorted);
+                setFiltered(sorted);
             } catch (err) {
                 console.error("Failed to load services:", err);
                 setServices([]);
@@ -47,15 +53,19 @@ export default function NewRequestPage() {
     // Filter services
     useEffect(() => {
         const q = search.toLowerCase();
-        setFiltered(
-            Array.isArray(services)
-                ? services.filter(
-                    (s) =>
-                        s.NAME.toLowerCase().includes(q) ||
-                        (s.DESCRIPTION && s.DESCRIPTION.toLowerCase().includes(q))
-                )
-                : []
-        );
+        const list = Array.isArray(services)
+            ? services.filter((s) =>
+                  s.NAME.toLowerCase().includes(q) ||
+                  (s.DESCRIPTION && s.DESCRIPTION.toLowerCase().includes(q))
+              )
+            : [];
+        // Keep active first when searching
+        const sorted = [...list].sort((a, b) => {
+            const aActive = String((a.STATUS ?? a.status) || "").toLowerCase() === "active";
+            const bActive = String((b.STATUS ?? b.status) || "").toLowerCase() === "active";
+            return Number(bActive) - Number(aActive);
+        });
+        setFiltered(sorted);
     }, [search, services]);
 
     if (loadingSession) return null;
@@ -141,18 +151,35 @@ export default function NewRequestPage() {
             {/* Services Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
                 {filtered.length > 0 ? (
-                    filtered.map((service) => (
-                        <div
-                            key={service.SERVICE_ID}
-                            className={`cursor-pointer rounded-2xl overflow-hidden border transition-all transform hover:scale-105 hover:shadow-lg ${selected?.SERVICE_ID === service.SERVICE_ID
-                                ? "ring-4 ring-blue-500 scale-105"
-                                : "ring-0"
+                    filtered.map((service) => {
+                        const isActive = String((service.STATUS ?? service.status) || "").toLowerCase() === "active";
+                        return (
+                            <div
+                                key={service.SERVICE_ID}
+                                className={`relative rounded-2xl overflow-hidden border transition-all transform ${
+                                    isActive
+                                        ? "cursor-pointer hover:scale-105 hover:shadow-lg"
+                                        : "cursor-not-allowed opacity-60 grayscale"
+                                } ${
+                                    selected?.SERVICE_ID === service.SERVICE_ID && isActive
+                                        ? "ring-4 ring-blue-500 scale-105"
+                                        : "ring-0"
                                 }`}
-                            onClick={() => setSelected(service)}
-                        >
-                            <ServiceCard service={service} />
-                        </div>
-                    ))
+                                onClick={() => {
+                                    if (isActive) setSelected(service);
+                                }}
+                                aria-disabled={!isActive}
+                                title={isActive ? service.NAME : `${service.NAME} (Inactive)`}
+                            >
+                                {!isActive && (
+                                    <div className="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-gray-200 text-gray-700 border">
+                                        Inactive
+                                    </div>
+                                )}
+                                <ServiceCard service={service} />
+                            </div>
+                        );
+                    })
                 ) : (
                     <p className="text-gray-500 col-span-full text-center py-10 text-lg">No services found.</p>
                 )}
@@ -160,3 +187,4 @@ export default function NewRequestPage() {
         </div>
     );
 }
+

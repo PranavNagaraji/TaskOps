@@ -53,7 +53,7 @@ async function approve(req, res) {
   try {
     const { id } = req.params;
     connection = await oracledb.getConnection(db.config);
-    
+
     // Fetch user email BEFORE approving (in case approval modifies records)
     const q = await connection.execute(
       `SELECT U.EMAIL, U.NAME
@@ -64,7 +64,7 @@ async function approve(req, res) {
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
     const user = q.rows?.[0];
-    
+
     const result = await approveVerification(connection, id);
     if (!result.success) {
       return res.status(result.code || 400).json({ error: result.message });
@@ -72,18 +72,59 @@ async function approve(req, res) {
 
     // Send approval email
     if (user?.EMAIL) {
-      const html = `<div style="font-family: Arial, sans-serif; color:#111;">
-        <div style="border:1px solid #e5e7eb; border-radius:12px; padding:20px; max-width:560px;">
-          <h2 style="margin:0 0 12px; color:#111">Congratulations, ${user.NAME || 'Applicant'}! 🎉</h2>
-          <p style="margin:0 0 12px; line-height:1.6;">Your employee verification request has been <b>approved</b> by the admin.</p>
-          <p style="margin:0 0 12px; line-height:1.6;">You can now access your employee dashboard and start managing your tasks.</p>
-          <div style="margin-top:16px;">
-            <a href="http://localhost:3000/employee/dashboard" style="display:inline-block; background:#111827; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px;">Go to Dashboard</a>
-          </div>
-          <p style="margin:16px 0 0; font-size:12px; color:#6b7280;">If the button doesn't work, copy and paste this URL into your browser: http://localhost:3000/employee/dashboard</p>
-          <p style="margin:16px 0 0;">Thank you,<br/>TaskOps Team</p>
-        </div>
-      </div>`;
+      const html = `
+<div style="font-family: Arial, sans-serif; color:#111;">
+  <div style="border:1px solid #e5e7eb; border-radius:12px; padding:20px; max-width:560px; margin:auto;">
+    <h2 style="margin:0 0 12px; color:#111;">
+      Congratulations, ${user.NAME || 'Applicant'}! 🎉
+    </h2>
+
+    <p style="margin:0 0 12px; line-height:1.6;">
+      Your employee verification request has been <b>approved</b> by the admin.
+    </p>
+
+    <p style="margin:0 0 12px; line-height:1.6;">
+      You can now access your employee dashboard and start managing your tasks.
+    </p>
+
+    <!-- Button (email-safe) -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:16px;">
+      <tr>
+        <td align="center" bgcolor="#111827" style="border-radius:8px;">
+          <a 
+            href="http://localhost:3000/employee/dashboard"
+            target="_blank"
+            style="
+              display:inline-block;
+              padding:10px 16px;
+              color:#ffffff;
+              background-color:#111827;
+              text-decoration:none;
+              border-radius:8px;
+              font-weight:500;
+            "
+          >
+            Go to Dashboard
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:16px 0 0; font-size:12px; color:#6b7280;">
+      If the button doesn't work, copy and paste this URL into your browser:<br />
+      <a href="http://localhost:3000/employee/dashboard" style="color:#111827; text-decoration:none;">
+        http://localhost:3000/employee/dashboard
+      </a>
+    </p>
+
+    <p style="margin:16px 0 0;">
+      Thank you,<br />
+      TaskOps Team
+    </p>
+  </div>
+</div>
+`;
+
       try {
         console.log('[APPROVAL EMAIL] Sending to:', user.EMAIL);
         await mailSender({
@@ -113,7 +154,7 @@ async function reject(req, res) {
   try {
     const { id } = req.params;
     connection = await oracledb.getConnection(db.config);
-    
+
     // Fetch user email BEFORE rejecting (in case rejection modifies records)
     const q = await connection.execute(
       `SELECT U.EMAIL, U.NAME
@@ -124,7 +165,7 @@ async function reject(req, res) {
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
     const user = q.rows?.[0];
-    
+
     const result = await rejectVerification(connection, id);
     if (!result.success) {
       return res.status(result.code || 400).json({ error: result.message });

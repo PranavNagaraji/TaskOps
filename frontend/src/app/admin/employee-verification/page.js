@@ -70,18 +70,18 @@ export default function EmployeeVerificationPage() {
     clearAlerts();
     setBusyById(prev => ({ ...prev, [verificationId]: 'reject' }));
     try {
-      // First delete the User via existing Users backend flow
-      const del = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`, { method: "DELETE" });
-      const delData = await del.json().catch(() => ({}));
-      if (!del.ok) throw new Error(delData.error || delData.message || "Failed to delete user");
-
-      // Then reject the verification via existing route
+      // First reject the verification via existing route (ensures backend can retrieve email before user deletion)
       const rej = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/employee-verification/${verificationId}/reject`, { method: "PATCH" });
       const rejData = await rej.json().catch(() => ({}));
       // If verification was already removed (e.g., by cascade/another process), treat 404 as success to avoid false error
       if (!rej.ok && rej.status !== 404) {
         throw new Error(rejData.error || rejData.message || "Failed to reject verification");
       }
+
+      // Then delete the User via existing Users backend flow
+      const del = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`, { method: "DELETE" });
+      const delData = await del.json().catch(() => ({}));
+      if (!del.ok) throw new Error(delData.error || delData.message || "Failed to delete user");
 
       setItems(prev => prev.filter(v => v.VERIFICATION_ID !== verificationId));
       if (expandedId === verificationId) setExpandedId(null);

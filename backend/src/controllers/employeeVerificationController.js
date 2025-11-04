@@ -78,9 +78,9 @@ async function approve(req, res) {
           <p style="margin:0 0 12px; line-height:1.6;">Your employee verification request has been <b>approved</b> by the admin.</p>
           <p style="margin:0 0 12px; line-height:1.6;">You can now access your employee dashboard and start managing your tasks.</p>
           <div style="margin-top:16px;">
-            <a href="${process.env.APP_BASE_URL || ''}/employee/dashboard" style="display:inline-block; background:#111827; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px;">Go to Dashboard</a>
+            <a href="http://localhost:3000/employee/dashboard" style="display:inline-block; background:#111827; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px;">Go to Dashboard</a>
           </div>
-          <p style="margin:16px 0 0; font-size:12px; color:#6b7280;">If the button doesn't work, copy and paste this URL into your browser: ${(process.env.APP_BASE_URL || '') + '/employee/dashboard'}</p>
+          <p style="margin:16px 0 0; font-size:12px; color:#6b7280;">If the button doesn't work, copy and paste this URL into your browser: http://localhost:3000/employee/dashboard</p>
           <p style="margin:16px 0 0;">Thank you,<br/>TaskOps Team</p>
         </div>
       </div>`;

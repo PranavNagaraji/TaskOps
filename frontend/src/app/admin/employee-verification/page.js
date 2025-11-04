@@ -14,6 +14,7 @@ export default function EmployeeVerificationPage() {
   const [previewCandidates, setPreviewCandidates] = useState([]); // array of candidate embed URLs
   const [previewIndex, setPreviewIndex] = useState(0);
   const [imgZoom, setImgZoom] = useState(1);
+  const [confirmAction, setConfirmAction] = useState(null); // { type, verificationId, userId, name, email, documentLink }
 
   useEffect(() => {
     let isMounted = true;
@@ -235,7 +236,17 @@ export default function EmployeeVerificationPage() {
                         className="inline-flex items-center justify-center px-3 py-2 rounded-md text-white text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                         style={{ backgroundColor: "#22c55e" }}
                         disabled={!!busyById[v.VERIFICATION_ID]}
-                        onClick={(e) => { e.stopPropagation(); if (!busyById[v.VERIFICATION_ID]) handleApprove(v.VERIFICATION_ID); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!busyById[v.VERIFICATION_ID]) setConfirmAction({
+                            type: 'approve',
+                            verificationId: v.VERIFICATION_ID,
+                            userId: v.USER_ID,
+                            name: v.NAME,
+                            email: v.EMAIL,
+                            documentLink: v.DOCUMENT_LINK,
+                          });
+                        }}
                       >
                         Approve
                       </button>
@@ -244,7 +255,17 @@ export default function EmployeeVerificationPage() {
                         className="inline-flex items-center justify-center px-3 py-2 rounded-md text-white text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                         style={{ backgroundColor: "#ef4444" }}
                         disabled={!!busyById[v.VERIFICATION_ID]}
-                        onClick={(e) => { e.stopPropagation(); if (!busyById[v.VERIFICATION_ID]) handleReject(v.VERIFICATION_ID, v.USER_ID); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!busyById[v.VERIFICATION_ID]) setConfirmAction({
+                            type: 'reject',
+                            verificationId: v.VERIFICATION_ID,
+                            userId: v.USER_ID,
+                            name: v.NAME,
+                            email: v.EMAIL,
+                            documentLink: v.DOCUMENT_LINK,
+                          });
+                        }}
                       >
                         Reject
                       </button>
@@ -254,6 +275,54 @@ export default function EmployeeVerificationPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmAction && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setConfirmAction(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-lg border border-border w-[92vw] max-w-md p-5 animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold text-foreground mb-2">
+              {confirmAction.type === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
+            </h2>
+            <div className="text-sm text-foreground mb-3">
+              <div><span className="text-muted-foreground">Name:</span> {confirmAction.name || '-'}</div>
+              <div className="break-all"><span className="text-muted-foreground">Email:</span> {confirmAction.email || '-'}</div>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              {confirmAction.type === 'approve'
+                ? 'Are you sure you want to approve this employee verification?'
+                : 'Are you sure you want to reject this employee verification? This will remove the applicant.'}
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className="px-3 py-2 rounded-md border border-border text-sm hover:bg-muted"
+                onClick={() => setConfirmAction(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-3 py-2 rounded-md text-white text-sm"
+                style={{ backgroundColor: confirmAction.type === 'approve' ? '#22c55e' : '#ef4444' }}
+                onClick={async () => {
+                  const a = confirmAction;
+                  setConfirmAction(null);
+                  if (a.type === 'approve') await handleApprove(a.verificationId);
+                  else await handleReject(a.verificationId, a.userId);
+                }}
+              >
+                {confirmAction.type === 'approve' ? 'Confirm' : 'Confirm'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

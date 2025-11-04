@@ -58,6 +58,40 @@ async function approve(req, res) {
       return res.status(result.code || 400).json({ error: result.message });
     }
 
+    // Fetch user email to notify approval
+    const q = await connection.execute(
+      `SELECT U.EMAIL, U.NAME
+         FROM EMPLOYEE_VERIFICATION EV
+         JOIN USERS U ON U.ID = EV.USER_ID
+        WHERE EV.VERIFICATION_ID = :id`,
+      { id },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const user = q.rows?.[0];
+    if (user?.EMAIL) {
+      const html = `<div style="font-family: Arial, sans-serif; color:#111;">
+        <div style="border:1px solid #e5e7eb; border-radius:12px; padding:20px; max-width:560px;">
+          <h2 style="margin:0 0 12px; color:#111">Congratulations, ${user.NAME || 'Applicant'}! 🎉</h2>
+          <p style="margin:0 0 12px; line-height:1.6;">Your employee verification request has been <b>approved</b> by the admin.</p>
+          <p style="margin:0 0 12px; line-height:1.6;">You can now access your employee dashboard and start managing your tasks.</p>
+          <div style="margin-top:16px;">
+            <a href="${process.env.APP_BASE_URL || ''}/employee/dashboard" style="display:inline-block; background:#111827; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px;">Go to Dashboard</a>
+          </div>
+          <p style="margin:16px 0 0; font-size:12px; color:#6b7280;">If the button doesn’t work, copy and paste this URL into your browser: ${(process.env.APP_BASE_URL || '') + '/employee/dashboard'}</p>
+          <p style="margin:16px 0 0;">Thank you,<br/>TaskOps Team</p>
+        </div>
+      </div>`;
+      try {
+        await mailSender({
+          email: user.EMAIL,
+          subject: 'Your TaskOps Employee Account Has Been Approved',
+          content: html,
+        });
+      } catch (_) {
+        // Do not fail the API if email sending fails
+      }
+    }
+
     return res.status(200).json({ message: 'Verification approved', employeeId: result.employeeId });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -96,7 +130,7 @@ async function reject(req, res) {
       try {
         await mailSender({
           email: user.EMAIL,
-          subject: 'Employee Verification - Application Rejected',
+          subject: 'Your TaskOps Employee Verification Request Has Been Rejected',
           content: html,
         });
       } catch (_) {

@@ -1,5 +1,120 @@
 # TaskOps – Service Management System
 
+## Project Overview
+TaskOps is a full-stack Service Management System built with Next.js (frontend), Node.js/Express (backend), and Oracle Database. It provides a role-based experience for Customers, Employees, and Admins. New users register via a two-step signup gated by OTP email verification (Mailjet). Employees must submit verification for Admin approval before gaining access. Admins can approve/reject employee verification and applicants are notified by email.
+
+## Tech Stack
+- Frontend: Next.js (App Router), React, Tailwind CSS
+- Backend: Node.js, Express.js
+- Database: OracleDB (oracledb driver)
+- Email: Mailjet (node-mailjet)
+- Environment: .env files for frontend and backend
+
+## Features
+- OTP-based email verification (Mailjet) during signup with a two-step UI (Send OTP → Verify → Full form)
+- Single email field that becomes disabled after OTP is verified
+- Role-based accounts: Customer, Employee, Admin
+- Employee verification workflow (submit document link + role → Admin approval/rejection)
+- Admin actions trigger Mailjet emails to applicants on approval or rejection
+- Duplicate email protection:
+  - OTP is not sent to already-registered emails
+  - User creation returns a clear conflict error if email already exists
+- Employee signup uses a styled role dropdown
+- Modern, responsive UI using Tailwind CSS
+
+## Environment Variables
+
+Backend (.env)
+- PORT=5000
+- DB_USER=...
+- DB_PASSWORD=...
+- DB_CONNECT=host:port/service
+- MJ_APIKEY_PUBLIC=your_mailjet_public_key
+- MJ_APIKEY_PRIVATE=your_mailjet_private_key
+- MJ_SENDER_EMAIL=verified_sender@example.com
+- MJ_SENDER_NAME=TaskOps
+- Optional (supported fallback): MJ_API_KEY, MJ_SECRET_KEY
+
+Frontend (.env.local)
+- NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+
+Notes
+- Emails are sent via Mailjet using the `mailSender` utility.
+- Approval emails link to http://localhost:3000/employee/dashboard.
+
+## Installation & Setup
+
+1) Backend
+- `cd backend`
+- `npm install`
+- Create `.env` with DB and Mailjet variables (see above)
+- Ensure Oracle Instant Client is installed and accessible (required by `oracledb`)
+- `npm start` (starts at PORT, default 5000)
+
+2) Frontend
+- `cd frontend`
+- `npm install`
+- Create `.env.local` with `NEXT_PUBLIC_BACKEND_URL`
+- `npm run dev` (runs on http://localhost:3000)
+
+3) Database (Oracle)
+- Run the SQL scripts in this order:
+  - `sms_db.sql` (core schema)
+  - `employee_verification.sql` (verification schema)
+  - `Otp_verification.sql` (OTP storage)
+  - `triggers_and_sequences.sql` (if present/applicable)
+
+## Mailjet Configuration
+1. Create a Mailjet account.
+2. Verify your sender email/domain (the sender must match `MJ_SENDER_EMAIL`).
+3. Generate API keys and set `MJ_APIKEY_PUBLIC` and `MJ_APIKEY_PRIVATE` (or the supported fallback names).
+4. Restart the backend after setting environment variables.
+5. Check console logs for `Mailjet send response` or `Mailjet send error` on email operations.
+
+## Database Schema / Required Tables
+- USERS (ID, NAME, EMAIL, PASSWORD_HASH, ROLE, PHONE, CREATED_AT)
+- CUSTOMERS (CUSTOMER_ID, USER_ID → USERS.ID, NAME, PHONE, EMAIL, ADDRESS)
+- EMPLOYEES (EMPLOYEE_ID, USER_ID → USERS.ID, NAME, PHONE, EMAIL, ROLE, STATUS, HIRE_DATE)
+- SERVICES, REQUESTS, ASSIGNMENTS (as required by the request workflow)
+- EMPLOYEE_VERIFICATION (VERIFICATION_ID, USER_ID, EMPLOYEE_ID, STATUS, DOCUMENT_LINK, ...)
+- OTP table (created by `Otp_verification.sql`) storing OTP codes with TTL
+
+## Role Flows
+- Customer
+  - Signup (OTP verification) → Create USERS row → Create CUSTOMERS record.
+- Employee
+  - Signup (OTP verification) → Create USERS row → Submit verification (`document_link`, role)
+  - Admin approval required to finalize access; emails sent on decision.
+- Admin
+  - Review pending employee verifications → Approve/Reject → Applicant notified by email.
+
+## Notes on OTP + Employee Verification Logic
+- OTP
+  - `POST /api/otp/send` sends a 6-digit OTP via Mailjet only if the email is not already registered.
+  - `POST /api/otp/verify` validates OTP; signup proceeds only after verification.
+- User Creation
+  - `POST /api/users` requires prior OTP verification.
+  - If the email already exists, returns 409 with `{ "message": "User with this email already exists" }`.
+- Employee Verification
+  - `POST /api/employee-verification` creates a verification request.
+  - Admin `PATCH /api/employee-verification/:id/approve|reject` updates status and sends Mailjet email to the applicant.
+
+## Troubleshooting
+- Mail delivery
+  - Ensure `MJ_APIKEY_PUBLIC/MJ_APIKEY_PRIVATE` (or fallback names) and `MJ_SENDER_EMAIL` are set.
+  - Verify the sender domain/email in Mailjet.
+  - Check backend logs for `Mailjet send response` / `Mailjet send error`.
+- OracleDB
+  - Install Oracle Instant Client and ensure `DB_CONNECT` is correct.
+  - Verify DB user privileges and that all SQL scripts have been executed.
+- API base URLs
+  - Ensure `NEXT_PUBLIC_BACKEND_URL` matches the backend URL and ports.
+- OTP not arriving
+  - Check Spam/Promotions folders.
+  - Verify Mailjet sender/domain and quota.
+
+---
+
 A full‑stack service management platform built with Next.js (App Router), Express.js, Socket.IO, and Oracle Database. It supports multi‑role workflows (customer, employee, admin), request lifecycle management, employee assignment, real‑time chat per request, and employee verification.
 
 ## Highlights

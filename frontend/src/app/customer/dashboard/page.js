@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../api/auth/[...nextauth]/route";
+import ChatButton from "@/app/components/ChatButton.jsx";
 
 async function getServiceRequests() {
   try {
@@ -42,9 +43,27 @@ export default async function CustomerDashboard() {
 
   const allRequests = await getServiceRequests();
   const customerId = await getCustomerId(userId);
-  const myRequests = allRequests.filter(
-    (request) => request.CUSTOMER_ID === customerId
-  );
+  const myRequests = allRequests.filter((request) => request.CUSTOMER_ID === customerId);
+
+  // Removed current request card
+
+  // All assigned requests for this customer (via assignments view)
+  let myAssigned = [];
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/assignments/requests/all`, {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const assignmentsView = await res.json();
+      const assigned = Array.isArray(assignmentsView.assigned) ? assignmentsView.assigned : [];
+      myAssigned = assigned
+        .filter((r) => Number(r.CUSTOMER_ID) === Number(customerId))
+        .sort((a, b) => new Date(b.REQUEST_CREATED_AT) - new Date(a.REQUEST_CREATED_AT));
+    }
+  } catch (err) {
+    console.error("Error fetching assignments view:", err);
+  }
 
   const stats = {
     total: myRequests.length,
@@ -81,6 +100,49 @@ export default async function CustomerDashboard() {
             <h3 className="text-gray-500 font-medium text-lg mb-3">Completed</h3>
             <p className="text-5xl font-bold text-green-500">{stats.completed}</p>
           </div>
+        </div>
+
+        {/* Current Request card removed as per requirement */}
+
+        {/* All Assigned Requests */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">All Assigned Requests</h2>
+          {myAssigned.length === 0 ? (
+            <div className="text-gray-500 text-sm">No assigned requests yet.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {myAssigned.map((r) => (
+                <div key={r.REQUEST_ID} className="bg-white p-5 rounded-xl shadow border">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs text-gray-500">Service</div>
+                      <div className="text-lg font-semibold text-gray-900">{r.SERVICE_NAME}</div>
+                      <div className="text-xs text-gray-600 mt-1">Assigned To: {r.EMPLOYEE_NAME}</div>
+                      <div className="text-xs text-gray-600">Created: {new Date(r.REQUEST_CREATED_AT).toLocaleString()}</div>
+                    </div>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${r.REQUEST_STATUS === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                        r.REQUEST_STATUS === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                          'bg-green-100 text-green-700'
+                      }`}>
+                      {r.REQUEST_STATUS}
+                    </span>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <ChatButton
+                      requestId={r.REQUEST_ID}
+                      userId={userId}
+                      userType="customer"
+                      userName={session?.user?.name || ''}
+                      label={r.REQUEST_STATUS === 'In Progress' ? 'Chat with Employee' : 'Chat (Disabled)'}
+                      disabled={r.REQUEST_STATUS !== 'In Progress'}
+                      title={`Request #${r.REQUEST_ID}`}
+                      subtitle={`Service: ${r.SERVICE_NAME}`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

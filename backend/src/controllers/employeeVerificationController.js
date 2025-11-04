@@ -1,5 +1,6 @@
 const oracledb = require('oracledb');
 const db = require('../config/db');
+const mailSender = require('../utils/mailSender');
 const {
   createVerification,
   getPendingVerifications,
@@ -73,6 +74,34 @@ async function reject(req, res) {
     const result = await rejectVerification(connection, id);
     if (!result.success) {
       return res.status(result.code || 400).json({ error: result.message });
+    }
+
+    // Fetch user email to notify rejection
+    const q = await connection.execute(
+      `SELECT U.EMAIL, U.NAME
+         FROM EMPLOYEE_VERIFICATION EV
+         JOIN USERS U ON U.ID = EV.USER_ID
+        WHERE EV.VERIFICATION_ID = :id`,
+      { id },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const user = q.rows?.[0];
+    if (user?.EMAIL) {
+      const html = `<div>
+        <p>Dear ${user.NAME || 'Applicant'},</p>
+        <p>We’re sorry to inform you that your employee verification request has been rejected by the admin.</p>
+        <p>If you believe this was a mistake or if you have additional documents to support your application, please resubmit your verification with the correct details.</p>
+        <p>Thank you,<br/>TaskOps Team</p>
+      </div>`;
+      try {
+        await mailSender({
+          email: user.EMAIL,
+          subject: 'Employee Verification - Application Rejected',
+          content: html,
+        });
+      } catch (_) {
+        // Do not fail the API if email sending fails
+      }
     }
 
     return res.status(200).json({ message: 'Verification rejected' });

@@ -2,38 +2,46 @@ const oracledb = require("oracledb");
 const db = require("../config/db.js");
 const Users = require("../models/usersModel");
 const bcrypt = require("bcrypt");
+const otpModel = require("../models/otpModel");
 
 async function addUser(req, res) {
-    let connection;
-    try {
-        connection = await oracledb.getConnection(db.config);
-        const { name, email, password, role, phone } = req.body;
-        const password_hash = await bcrypt.hash(password, 10);
-        const newUserId = await Users.addUser(connection, { name, email, password_hash, role, phone });
-        res.status(201).json({
-            message: "User added successfully",
-            userId: newUserId // The newly created ID
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    } finally {
-        if (connection) {
-            await connection.close();
-        }
+  let connection;
+  try {
+    connection = await oracledb.getConnection(db.config);
+    const { name, email, password, role, phone } = req.body;
+
+    // Require verified OTP for the provided email before creating the user
+    const isVerified = await otpModel.isEmailVerified(connection, email);
+    if (!isVerified) {
+      return res.status(400).json({ message: "Email not verified. Please verify OTP before signing up." });
     }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const newUserId = await Users.addUser(connection, { name, email, password_hash, role, phone });
+    res.status(201).json({
+      message: "User added successfully",
+      userId: newUserId // The newly created ID
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
+  }
 }
 
 async function getAllUsers(req, res) {
-    let connection;
-    try {
-        connection = await oracledb.getConnection(db.config);
-        const users = await Users.getAll(connection);
-        res.json(users);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    } finally {
-        if (connection) await connection.close();
-    }
+  let connection;
+  try {
+    connection = await oracledb.getConnection(db.config);
+    const users = await Users.getAll(connection);
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (connection) await connection.close();
+  }
 }
 
 async function getUserById(req, res) {

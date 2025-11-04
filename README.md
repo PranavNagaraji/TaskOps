@@ -179,6 +179,7 @@ Entities and relations inferred from SQL and queries:
 erDiagram
   USERS ||--o{ CUSTOMERS : has
   USERS ||--o{ EMPLOYEES : has
+  USERS ||--o{ OTP_VERIFICATION : verifies
   CUSTOMERS ||--o{ REQUESTS : creates
   SERVICES ||--o{ REQUESTS : requested_for
   REQUESTS ||--o{ ASSIGNMENTS : assigned_to
@@ -243,6 +244,14 @@ erDiagram
     string DOCUMENT_LINK
     date CREATED_AT
     date UPDATED_AT
+  }
+  OTP_VERIFICATION {
+    number OTP_ID PK
+    number USER_ID FK
+    string EMAIL
+    string OTP_CODE
+    date EXPIRES_AT
+    string VERIFIED
   }
 ```
 

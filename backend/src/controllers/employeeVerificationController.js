@@ -53,12 +53,8 @@ async function approve(req, res) {
   try {
     const { id } = req.params;
     connection = await oracledb.getConnection(db.config);
-    const result = await approveVerification(connection, id);
-    if (!result.success) {
-      return res.status(result.code || 400).json({ error: result.message });
-    }
-
-    // Fetch user email to notify approval
+    
+    // Fetch user email BEFORE approving (in case approval modifies records)
     const q = await connection.execute(
       `SELECT U.EMAIL, U.NAME
          FROM EMPLOYEE_VERIFICATION EV
@@ -68,6 +64,13 @@ async function approve(req, res) {
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
     const user = q.rows?.[0];
+    
+    const result = await approveVerification(connection, id);
+    if (!result.success) {
+      return res.status(result.code || 400).json({ error: result.message });
+    }
+
+    // Send approval email
     if (user?.EMAIL) {
       const html = `<div style="font-family: Arial, sans-serif; color:#111;">
         <div style="border:1px solid #e5e7eb; border-radius:12px; padding:20px; max-width:560px;">
@@ -77,19 +80,24 @@ async function approve(req, res) {
           <div style="margin-top:16px;">
             <a href="${process.env.APP_BASE_URL || ''}/employee/dashboard" style="display:inline-block; background:#111827; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px;">Go to Dashboard</a>
           </div>
-          <p style="margin:16px 0 0; font-size:12px; color:#6b7280;">If the button doesn’t work, copy and paste this URL into your browser: ${(process.env.APP_BASE_URL || '') + '/employee/dashboard'}</p>
+          <p style="margin:16px 0 0; font-size:12px; color:#6b7280;">If the button doesn't work, copy and paste this URL into your browser: ${(process.env.APP_BASE_URL || '') + '/employee/dashboard'}</p>
           <p style="margin:16px 0 0;">Thank you,<br/>TaskOps Team</p>
         </div>
       </div>`;
       try {
+        console.log('[APPROVAL EMAIL] Sending to:', user.EMAIL);
         await mailSender({
           email: user.EMAIL,
           subject: 'Your TaskOps Employee Account Has Been Approved',
           content: html,
         });
-      } catch (_) {
+        console.log('[APPROVAL EMAIL] Sent successfully to:', user.EMAIL);
+      } catch (emailErr) {
+        console.error('[APPROVAL EMAIL] Failed to send:', emailErr.message || emailErr);
         // Do not fail the API if email sending fails
       }
+    } else {
+      console.warn('[APPROVAL EMAIL] No user email found for verification ID:', id);
     }
 
     return res.status(200).json({ message: 'Verification approved', employeeId: result.employeeId });
@@ -105,12 +113,8 @@ async function reject(req, res) {
   try {
     const { id } = req.params;
     connection = await oracledb.getConnection(db.config);
-    const result = await rejectVerification(connection, id);
-    if (!result.success) {
-      return res.status(result.code || 400).json({ error: result.message });
-    }
-
-    // Fetch user email to notify rejection
+    
+    // Fetch user email BEFORE rejecting (in case rejection modifies records)
     const q = await connection.execute(
       `SELECT U.EMAIL, U.NAME
          FROM EMPLOYEE_VERIFICATION EV
@@ -120,22 +124,34 @@ async function reject(req, res) {
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
     const user = q.rows?.[0];
+    
+    const result = await rejectVerification(connection, id);
+    if (!result.success) {
+      return res.status(result.code || 400).json({ error: result.message });
+    }
+
+    // Send rejection email
     if (user?.EMAIL) {
       const html = `<div>
         <p>Dear ${user.NAME || 'Applicant'},</p>
-        <p>We’re sorry to inform you that your employee verification request has been rejected by the admin.</p>
+        <p>We're sorry to inform you that your employee verification request has been rejected by the admin.</p>
         <p>If you believe this was a mistake or if you have additional documents to support your application, please resubmit your verification with the correct details.</p>
         <p>Thank you,<br/>TaskOps Team</p>
       </div>`;
       try {
+        console.log('[REJECTION EMAIL] Sending to:', user.EMAIL);
         await mailSender({
           email: user.EMAIL,
           subject: 'Your TaskOps Employee Verification Request Has Been Rejected',
           content: html,
         });
-      } catch (_) {
+        console.log('[REJECTION EMAIL] Sent successfully to:', user.EMAIL);
+      } catch (emailErr) {
+        console.error('[REJECTION EMAIL] Failed to send:', emailErr.message || emailErr);
         // Do not fail the API if email sending fails
       }
+    } else {
+      console.warn('[REJECTION EMAIL] No user email found for verification ID:', id);
     }
 
     return res.status(200).json({ message: 'Verification rejected' });

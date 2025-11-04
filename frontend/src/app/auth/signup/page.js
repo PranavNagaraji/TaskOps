@@ -183,7 +183,7 @@ export default function SignUpPage() {
                 <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Create an Account</h2>
 
                 {error && (
-                    <div className="bg-destructive text-white w-fit text-sm py-1 px-3 rounded-md mb-4">
+                    <div className="bg-destructive text-red-800 w-fit text-sm py-1 px-3 rounded-md mb-4">
                         {error}
                     </div>
                 )}
@@ -256,13 +256,22 @@ export default function SignUpPage() {
                                 </div>
                             ) : (
                                 <>
-                                    <input
-                                        type="text"
-                                        placeholder="Employee Role (e.g., Plumber, Electrician, etc.)"
+                                    <select
                                         value={employeeRole}
                                         onChange={(e) => setEmployeeRole(e.target.value)}
-                                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    />
+                                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/20"
+                                    >
+                                        <option value="">Select Employee Role</option>
+                                        <option value="Plumber">Plumber</option>
+                                        <option value="Electrician">Electrician</option>
+                                        <option value="Carpenter">Carpenter</option>
+                                        <option value="Painter">Painter</option>
+                                        <option value="Mechanic">Mechanic</option>
+                                        <option value="Technician">Technician</option>
+                                        <option value="Cleaner">Cleaner</option>
+                                        <option value="Driver">Driver</option>
+                                        <option value="Security Guard">Security Guard</option>
+                                    </select>
                                     <input
                                         type="url"
                                         placeholder="Document link (certificate/license URL)"

@@ -18,7 +18,8 @@ export default function AdminEmployeesPage() {
     const [resultMessage, setResultMessage] = useState("");
     const [pendingUserId, setPendingUserId] = useState(null);
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    const MAX_INACTIVE_DAYS = 60;
+    // const MAX_INACTIVE_DAYS = 60;
+    const MAX_INACTIVE_DAYS = 1 / (60 * 24);
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -94,7 +95,8 @@ export default function AdminEmployeesPage() {
         if (!employees.length) return;
         const id = setInterval(() => {
             runAutoDeletionCheck(false);
-        }, 24 * 60 * 60 * 1000);
+            // }, 24 * 60 * 60 * 1000);
+        }, 60 * 1000);
         return () => clearInterval(id);
     }, [employees]);
 
@@ -151,7 +153,8 @@ export default function AdminEmployeesPage() {
             .map(e => {
                 const id = String(e.USER_ID);
                 const first = map[id]?.firstSeenInactive || now;
-                const daysInactive = Math.floor((now - first) / (1000 * 60 * 60 * 24));
+                // const daysInactive = Math.floor((now - first) / (1000 * 60 * 60 * 24));
+                const daysInactive = (now - first) / (1000 * 60 * 60 * 24);
                 const daysRemaining = Math.max(0, MAX_INACTIVE_DAYS - daysInactive);
                 return { id: e.USER_ID, name: e.NAME, email: e.EMAIL, daysInactive, daysRemaining };
             })
@@ -186,7 +189,8 @@ export default function AdminEmployeesPage() {
             .map(e => {
                 const id = String(e.USER_ID);
                 const first = map[id]?.firstSeenInactive || now;
-                const daysInactive = Math.floor((now - first) / (1000 * 60 * 60 * 24));
+                // const daysInactive = Math.floor((now - first) / (1000 * 60 * 60 * 24));
+                const daysInactive = (now - first) / (1000 * 60 * 60 * 24);
                 const daysRemaining = Math.max(0, MAX_INACTIVE_DAYS - daysInactive);
                 return { id: e.USER_ID, name: e.NAME, daysRemaining };
             });
@@ -370,11 +374,13 @@ export default function AdminEmployeesPage() {
                                             <tr>
                                                 <th className="py-2 pr-4">Name</th>
                                                 <th className="py-2 pr-4">Email</th>
-                                                <th className="py-2 pr-4">Days Inactive</th>
-                                                <th className="py-2 pr-4">Days Remaining</th>
+                                                {/* <th className="py-2 pr-4">Days Inactive</th> */}
+                                                {/* <th className="py-2 pr-4">Days Remaining</th> */}
+                                                <th className="py-2 pr-4">Minutes Inactive</th>
+                                                <th className="py-2 pr-4">Minutes Remaining</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        {/* <tbody>
                                             {inactiveInfo.map(row => (
                                                 <tr key={row.id} className="border-t">
                                                     <td className="py-2 pr-4">{row.name}</td>
@@ -383,6 +389,26 @@ export default function AdminEmployeesPage() {
                                                     <td className={`py-2 pr-4 ${row.daysRemaining <= 7 ? 'text-red-600' : 'text-gray-800'}`}>{row.daysRemaining}</td>
                                                 </tr>
                                             ))}
+                                        </tbody> */}
+                                        <tbody>
+                                            {inactiveInfo.map(row => {
+                                                const minutesInactive = (row.daysInactive * 1440).toFixed(1);
+                                                const minutesRemaining = (row.daysRemaining * 1440).toFixed(1);
+                                                // Check if remaining minutes is <= 0 (or very close, due to floating point math)
+                                                const isDue = row.daysRemaining <= (1 / 1440);
+
+                                                return (
+                                                    <tr key={row.id} className="border-t">
+                                                        <td className="py-2 pr-4">{row.name}</td>
+                                                        <td className="py-2 pr-4">{row.email}</td>
+                                                        <td className="py-2 pr-4">{minutesInactive} min</td>
+                                                        <td className={`py-2 pr-4 ${isDue ? 'text-red-600' : 'text-gray-800'}`}>
+                                                            {minutesRemaining} min
+                                                        </td>
+                                                    </tr>
+                                                );
+                                                S
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

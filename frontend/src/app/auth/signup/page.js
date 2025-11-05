@@ -179,126 +179,133 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background py-12">
-            <form
-                onSubmit={handleSubmit}
-                className="bg-white p-8 rounded-2xl shadow-sm border border-border w-full max-w-md"
-            >
-                <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Create an Account</h2>
+        <div className="relative min-h-screen">
+            <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: "url('/sign_up.jpeg')" }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/80" />
+            <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-8">
+                <form
+                    onSubmit={handleSubmit}
+                    className="w-full max-w-md bg-zinc-900/85 text-zinc-100 backdrop-blur-md p-8 sm:p-10 rounded-2xl shadow-2xl border border-white/10"
+                >
+                    <h2 className="text-3xl font-extrabold mb-6 text-left text-teal-300">Create an Account</h2>
 
-                {error && (
-                    <div className="bg-destructive text-red-800 w-fit text-sm py-1 px-3 rounded-md mb-4">
-                        {error}
-                    </div>
-                )}
+                    {error && (
+                        <div className="mb-4 w-full rounded-lg border border-red-500/20 bg-red-500/10 text-red-300 text-sm py-2 px-3">
+                            {error}
+                        </div>
+                    )}
 
-                {/* Step 1: Only Email and OTP */}
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={otpVerified}
-                    className="w-full p-2.5 mb-2 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:bg-muted disabled:text-muted-foreground"
-                />
-                {step === 1 && (
-                    <>
-                        {!otpSent && (
-                            <button type="button" onClick={handleSendOtp} disabled={isLoading || !email} className="w-full mb-4 bg-secondary text-secondary-foreground p-2.5 rounded-md font-semibold hover:bg-secondary/90 disabled:bg-muted disabled:text-muted-foreground hover:cursor-pointer">
-                                {isLoading ? "Sending OTP..." : "Send OTP"}
-                            </button>
-                        )}
-                        {otpSent && !otpVerified && (
-                            <div className="mt-1 mb-3">
-                                <div className="text-sm text-muted-foreground mb-2">OTP sent to your email</div>
-                                <input type="text" placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full p-2.5 mb-2 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-                                <button type="button" onClick={handleVerifyOtp} disabled={isLoading || !otp} className="w-full bg-secondary text-secondary-foreground p-2.5 rounded-md font-semibold hover:bg-secondary/90 disabled:bg-muted disabled:text-muted-foreground hover:cursor-pointer">
-                                    {isLoading ? "Verifying..." : "Verify OTP"}
+                    {/* Step 1: Only Email and OTP */}
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={otpVerified}
+                        className="w-full px-3 py-2.5 mb-2 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-400/80 disabled:opacity-80"
+                    />
+                    {step === 1 && (
+                        <>
+                            {!otpSent && (
+                                <button type="button" onClick={handleSendOtp} disabled={isLoading || !email} className="w-full mb-4 bg-teal-400 text-zinc-900 p-2.5 rounded-lg font-semibold hover:bg-teal-300 disabled:opacity-70 hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400/80">
+                                    {isLoading ? "Sending OTP..." : "Send OTP"}
                                 </button>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {/* Step 2: Full form after verification */}
-                {step === 2 && (
-                    <>
-                        <div className="text-green-600 text-sm mb-3">Email verified</div>
-                        <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-                        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-                        <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-
-                        <hr className="my-4" />
-
-                        {/* --- Role Selection & Dynamic Fields --- */}
-                        <label className="block text-sm font-medium text-foreground mb-2">Select Your Role</label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                            <option value="customer">Customer</option>
-                            <option value="employee">Employee</option>
-                        </select>
-
-                        {/* Customer-specific Input */}
-                        {role === "customer" && (
-                            <input
-                                type="text"
-                                placeholder="City"
-                                value={city}
-                                onChange={(e) => setCity(e.target.value)}
-                                className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            />
-                        )}
-
-                        {/* Employee-specific Input */}
-                        {role === "employee" && (
-                            pendingVerification ? (
-                                <div className="w-full p-3 mb-4 rounded-md bg-amber-50 text-amber-800 border border-amber-200 animate-fade-in">
-                                    Your account is pending admin approval
+                            )}
+                            {otpSent && !otpVerified && (
+                                <div className="mt-1 mb-3">
+                                    <div className="text-sm text-zinc-400 mb-2">OTP sent to your email</div>
+                                    <input type="text" placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full px-3 py-2.5 mb-2 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-400/80" />
+                                    <button type="button" onClick={handleVerifyOtp} disabled={isLoading || !otp} className="w-full bg-teal-400 text-zinc-900 p-2.5 rounded-lg font-semibold hover:bg-teal-300 disabled:opacity-70 hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400/80">
+                                        {isLoading ? "Verifying..." : "Verify OTP"}
+                                    </button>
                                 </div>
-                            ) : (
-                                <>
-                                    <select
-                                        value={employeeRole}
-                                        onChange={(e) => setEmployeeRole(e.target.value)}
-                                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/20"
-                                    >
-                                        <option value="">Select Employee Role</option>
-                                        <option value="Plumber">Plumber</option>
-                                        <option value="Electrician">Electrician</option>
-                                        <option value="Carpenter">Carpenter</option>
-                                        <option value="Painter">Painter</option>
-                                        <option value="Mechanic">Mechanic</option>
-                                        <option value="Technician">Technician</option>
-                                        <option value="Cleaner">Cleaner</option>
-                                        <option value="Driver">Driver</option>
-                                        <option value="Security Guard">Security Guard</option>
-                                    </select>
-                                    <input
-                                        type="url"
-                                        placeholder="Document link (certificate/license URL)"
-                                        value={documentLink}
-                                        onChange={(e) => setDocumentLink(e.target.value)}
-                                        className="w-full p-2.5 mb-4 border border-border rounded-md bg-white text-foreground placeholder:text-muted-foreground animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    />
-                                </>
-                            )
-                        )}
+                            )}
+                        </>
+                    )}
 
-                        <button type="submit" disabled={isLoading || !otpVerified} className="w-full mt-4 bg-secondary text-secondary-foreground p-2.5 rounded-md font-semibold hover:bg-secondary/90 disabled:bg-muted disabled:text-muted-foreground hover:cursor-pointer">
-                            {isLoading ? "Signing Up..." : (!otpVerified ? "Verify Email to Continue" : "Sign Up")}
-                        </button>
+                    {/* Step 2: Full form after verification */}
+                    {step === 2 && (
+                        <>
+                            <div className="text-green-400 text-sm mb-3">Email verified</div>
+                            <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-400/80" />
+                            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-400/80" />
+                            <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-400/80" />
 
-                    </>
-                )}
+                            <hr className="my-4" />
 
-                <div className="text-center mt-4 text-sm text-muted-foreground">
-                    Already have an account?{' '}
-                    <Link href="/auth/signin" className="text-primary hover:underline">Sign In</Link>
-                </div>
-            </form>
+                            {/* --- Role Selection & Dynamic Fields --- */}
+                            <label className="block text-sm font-medium text-zinc-300 mb-2">Select Your Role</label>
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-teal-400/80"
+                            >
+                                <option value="customer">Customer</option>
+                                <option value="employee">Employee</option>
+                            </select>
+
+                            {/* Customer-specific Input */}
+                            {role === "customer" && (
+                                <input
+                                    type="text"
+                                    placeholder="City"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 animate-fade-in focus:outline-none focus:ring-2 focus:ring-teal-400/80"
+                                />
+                            )}
+
+                            {/* Employee-specific Input */}
+                            {role === "employee" && (
+                                pendingVerification ? (
+                                    <div className="w-full p-3 mb-4 rounded-md border border-amber-400/20 bg-amber-400/10 text-amber-300 animate-fade-in">
+                                        Your account is pending admin approval
+                                    </div>
+                                ) : (
+                                    <>
+                                        <select
+                                            value={employeeRole}
+                                            onChange={(e) => setEmployeeRole(e.target.value)}
+                                            className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 animate-fade-in focus:outline-none focus:ring-2 focus:ring-teal-400/80 hover:bg-zinc-800/70"
+                                        >
+                                            <option value="">Select Employee Role</option>
+                                            <option value="Plumber">Plumber</option>
+                                            <option value="Electrician">Electrician</option>
+                                            <option value="Carpenter">Carpenter</option>
+                                            <option value="Painter">Painter</option>
+                                            <option value="Mechanic">Mechanic</option>
+                                            <option value="Technician">Technician</option>
+                                            <option value="Cleaner">Cleaner</option>
+                                            <option value="Driver">Driver</option>
+                                            <option value="Security Guard">Security Guard</option>
+                                        </select>
+                                        <input
+                                            type="url"
+                                            placeholder="Document link (certificate/license URL)"
+                                            value={documentLink}
+                                            onChange={(e) => setDocumentLink(e.target.value)}
+                                            className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 animate-fade-in focus:outline-none focus:ring-2 focus:ring-teal-400/80"
+                                        />
+                                    </>
+                                )
+                            )}
+
+                            <button type="submit" disabled={isLoading || !otpVerified} className="w-full mt-4 bg-teal-400 text-zinc-900 p-2.5 rounded-lg font-semibold hover:bg-teal-300 disabled:opacity-70 hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400/80">
+                                {isLoading ? "Signing Up..." : (!otpVerified ? "Verify Email to Continue" : "Sign Up")}
+                            </button>
+
+                        </>
+                    )}
+
+                    <div className="text-center mt-4 text-sm text-zinc-400">
+                        Already have an account?{' '}
+                        <Link href="/auth/signin" className="text-teal-300 hover:underline">Sign In</Link>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 }

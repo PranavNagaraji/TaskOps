@@ -7,6 +7,11 @@ export default function CustomersPage() {
     const [user, setUser] = useState(null);
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [resultOpen, setResultOpen] = useState(false);
+    const [resultType, setResultType] = useState("success"); // success | error
+    const [resultMessage, setResultMessage] = useState("");
+    const [pendingUserId, setPendingUserId] = useState(null);
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     useEffect(() => {
@@ -35,16 +40,27 @@ export default function CustomersPage() {
     }, [user]);
 
     const handleDelete = async (userId) => {
-        if (!confirm("Are you sure you want to delete this customer?")) return;
+        setPendingUserId(userId);
+        setConfirmOpen(true);
+    };
 
+    const performDeletion = async () => {
+        if (!pendingUserId) return;
         try {
-            const res = await fetch(`${apiUrl}/api/users/${userId}`, { method: "DELETE" });
+            const res = await fetch(`${apiUrl}/api/users/${pendingUserId}`, { method: "DELETE" });
             if (!res.ok) throw new Error("Failed to delete customer");
-            alert("Customer deleted successfully");
-            fetchCustomers();
+            setResultType("success");
+            setResultMessage("Customer deleted successfully.");
+            setResultOpen(true);
+            await fetchCustomers();
         } catch (err) {
             console.error(err);
-            alert(err.message);
+            setResultType("error");
+            setResultMessage(err.message || "Failed to delete customer.");
+            setResultOpen(true);
+        } finally {
+            setConfirmOpen(false);
+            setPendingUserId(null);
         }
     };
 
@@ -70,7 +86,6 @@ export default function CustomersPage() {
                                 <p><span className="font-semibold">Phone:</span> {c.PHONE}</p>
                                 <p><span className="font-semibold">Email:</span> {c.EMAIL}</p>
                                 <p><span className="font-semibold">Address:</span> {c.ADDRESS}</p>
-                                <p><span className="font-semibold">Joined:</span> {new Date(c.CREATED_AT).toLocaleDateString()}</p>
                             </div>
                             <button
                                 onClick={() => handleDelete(c.USER_ID)} // <- Use USER_ID, not CUSTOMER_ID
@@ -84,6 +99,44 @@ export default function CustomersPage() {
             ) : (
                 <p className="text-gray-400 w-full text-center">No customers found.</p>
             )}
+
+            {/* Confirm Delete Modal */}
+            {confirmOpen && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+                        <div className="flex items-center justify-between px-5 py-3 border-b">
+                            <h2 className="text-lg font-semibold">Confirm Deletion</h2>
+                            <button onClick={() => setConfirmOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+                        </div>
+                        <div className="p-5 text-sm text-gray-700">
+                            Are you sure you want to delete this customer? This action cannot be undone.
+                        </div>
+                        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t">
+                            <button onClick={() => { setConfirmOpen(false); setPendingUserId(null); }} className="px-3 py-2 rounded border">Cancel</button>
+                            <button onClick={performDeletion} className="px-3 py-2 bg-red-600 text-white rounded">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Result Modal */}
+            {resultOpen && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+                        <div className="flex items-center justify-between px-5 py-3 border-b">
+                            <h2 className="text-lg font-semibold">{resultType === 'success' ? 'Success' : 'Error'}</h2>
+                            <button onClick={() => setResultOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+                        </div>
+                        <div className="p-5 text-sm text-gray-700">
+                            {resultMessage}
+                        </div>
+                        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t">
+                            <button onClick={() => setResultOpen(false)} className="px-3 py-2 rounded border">Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+

@@ -12,6 +12,11 @@ export default function AdminEmployeesPage() {
     const [checkingEmployees, setCheckingEmployees] = useState(new Set());
     const [isRunningCheck, setIsRunningCheck] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [resultOpen, setResultOpen] = useState(false);
+    const [resultType, setResultType] = useState("success"); // success | error
+    const [resultMessage, setResultMessage] = useState("");
+    const [pendingUserId, setPendingUserId] = useState(null);
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const MAX_INACTIVE_DAYS = 60;
 
@@ -94,29 +99,46 @@ export default function AdminEmployeesPage() {
     }, [employees]);
 
     const handleDelete = async (userId) => {
-        const confirmed = confirm(
-            "Are you sure you want to delete this employee? In-progress assignments will be removed and requests set to Pending."
-        );
-        if (!confirmed) return;
+        setPendingUserId(userId);
+        setConfirmOpen(true);
+    };
 
+    const performDeletion = async () => {
+        if (!pendingUserId) return;
         try {
-            const delRes = await fetch(`${apiUrl}/api/users/${userId}`, { method: "DELETE" });
+            const delRes = await fetch(`${apiUrl}/api/users/${pendingUserId}`, { method: "DELETE" });
             if (!delRes.ok) throw new Error("Failed to delete user");
-            alert("Employee deleted successfully");
 
-            const putRes = await fetch(`${apiUrl}/api/requests/incomplete`, { method: "PUT" });
-            if (!putRes.ok) throw new Error("Failed to update requests");
-            const putData = await putRes.json();
-            alert(putData.message);
+            let extraMsg = "";
+            try {
+                const putRes = await fetch(`${apiUrl}/api/requests/incomplete`, { method: "PUT" });
+                if (putRes.ok) {
+                    const putData = await putRes.json();
+                    extraMsg = putData?.message ? ` ${putData.message}` : "";
+                } else {
+                    extraMsg = " Requests update failed.";
+                }
+            } catch (_) {
+                extraMsg = " Requests update failed.";
+            }
 
-            setEmployees(prev => prev.filter(e => e.USER_ID !== userId));
+            setEmployees(prev => prev.filter(e => e.USER_ID !== pendingUserId));
             const key = "inactiveEmployees";
             const map = JSON.parse(localStorage.getItem(key) || "{}");
-            delete map[String(userId)];
+            delete map[String(pendingUserId)];
             localStorage.setItem(key, JSON.stringify(map));
+
+            setResultType("success");
+            setResultMessage(`Employee deleted successfully.${extraMsg}`.trim());
+            setResultOpen(true);
         } catch (err) {
             console.error(err);
-            alert(err.message);
+            setResultType("error");
+            setResultMessage(err.message || "Failed to delete user");
+            setResultOpen(true);
+        } finally {
+            setConfirmOpen(false);
+            setPendingUserId(null);
         }
     };
 
@@ -294,6 +316,43 @@ export default function AdminEmployeesPage() {
                 </div>
             ) : (
                 <p className="text-gray-400 w-full text-center">No employees found.</p>
+            )}
+
+            {/* Confirm Delete Modal */}
+            {confirmOpen && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+                        <div className="flex items-center justify-between px-5 py-3 border-b">
+                            <h2 className="text-lg font-semibold">Confirm Deletion</h2>
+                            <button onClick={() => setConfirmOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+                        </div>
+                        <div className="p-5 text-sm text-gray-700">
+                            Are you sure you want to delete this employee? In-progress assignments will be removed and related requests set to Pending.
+                        </div>
+                        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t">
+                            <button onClick={() => { setConfirmOpen(false); setPendingUserId(null); }} className="px-3 py-2 rounded border">Cancel</button>
+                            <button onClick={performDeletion} className="px-3 py-2 bg-red-600 text-white rounded">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Result Modal */}
+            {resultOpen && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+                        <div className="flex items-center justify-between px-5 py-3 border-b">
+                            <h2 className="text-lg font-semibold">{resultType === 'success' ? 'Success' : 'Error'}</h2>
+                            <button onClick={() => setResultOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+                        </div>
+                        <div className="p-5 text-sm text-gray-700">
+                            {resultMessage}
+                        </div>
+                        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t">
+                            <button onClick={() => setResultOpen(false)} className="px-3 py-2 rounded border">Close</button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {showInactiveModal && (

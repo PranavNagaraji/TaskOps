@@ -3,6 +3,7 @@ const db = require("../config/db.js");
 const Users = require("../models/usersModel");
 const bcrypt = require("bcrypt");
 const otpModel = require("../models/otpModel");
+const mailSender = require("../utils/mailSender");
 
 async function addUser(req, res) {
   let connection;
@@ -68,7 +69,42 @@ async function deleteUser(req, res) {
     let connection;
     try {
         connection = await oracledb.getConnection(db.config);
-        await Users.deleteUser(connection, req.params.id);
+        const userId = req.params.id;
+        // Fetch user details BEFORE deletion for email notification
+        const q = await connection.execute(
+            `SELECT ID, NAME, EMAIL, ROLE FROM USERS WHERE ID = :id`,
+            [userId],
+            { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+        const user = q.rows?.[0];
+
+        await Users.deleteUser(connection, userId);
+
+        // Fire-and-forget style email (do not fail API if email send fails)
+        if (user?.EMAIL) {
+            const html = `
+<div style="font-family: Arial, sans-serif; color:#111;">
+  <div style="border:1px solid #e5e7eb; border-radius:12px; padding:20px; max-width:560px; margin:auto;">
+    <h2 style="margin:0 0 12px; color:#111;">Your TaskOps Account Has Been Removed</h2>
+    <p style="margin:0 0 12px; line-height:1.6;">Dear ${user.NAME || 'User'},</p>
+    <p style="margin:0 0 12px; line-height:1.6;">
+      This is to inform you that your TaskOps account${user.ROLE ? ` (role: <b>${user.ROLE}</b>)` : ''} has been removed by the administrator.
+    </p>
+    <p style="margin:0 0 12px; line-height:1.6;">
+      If you believe this was a mistake or if you need further assistance, please reply to this email.
+    </p>
+    <p style="margin:16px 0 0;">Thank you,<br/>TaskOps Team</p>
+  </div>
+ </div>`;
+            mailSender({
+                email: user.EMAIL,
+                subject: 'Your TaskOps Account Has Been Removed',
+                content: html,
+            }).catch((e) => {
+                try { console.error('[DELETE USER EMAIL] Failed:', e?.message || e); } catch (_) {}
+            });
+        }
+
         res.json({ message: "User deleted successfully" });
     } catch (err) {
         res.status(500).json({ error: err.message });

@@ -104,14 +104,16 @@ export default async function CustomerDashboard() {
 
         {/* Current Request card removed as per requirement */}
 
-        {/* All Assigned Requests */}
+        {/* In-Progress Assigned Requests */}
         <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">All Assigned Requests</h2>
-          {myAssigned.length === 0 ? (
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">In-Progress Assigned Requests</h2>
+          {myAssigned.filter(r => r.REQUEST_STATUS === 'In Progress').length === 0 ? (
             <div className="text-gray-500 text-sm">No assigned requests yet.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {myAssigned.map((r) => (
+              {myAssigned
+                .filter((r) => r.REQUEST_STATUS === 'In Progress')
+                .map((r) => (
                 <div key={r.REQUEST_ID} className="bg-white p-5 rounded-xl shadow border">
                   <div className="flex items-start justify-between gap-3">
                     <div>

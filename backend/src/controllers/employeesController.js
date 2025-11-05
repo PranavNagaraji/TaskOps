@@ -1,6 +1,7 @@
 const oracledb = require('oracledb');
 const db = require('../config/db');
 const { getAllEmployees, addEmployee, updateEmployeeStatus, deleteEmployee, getActiveEmployees, getInactiveEmployees, updateRole, getEmployeeByUserId } = require('../models/employeesModel');
+const mailSender = require('../utils/mailSender');
 
 async function getEmployees(req, res) {
     let connection;
@@ -154,6 +155,35 @@ async function getEmployeeByUserIdController(req, res) {
     }
 }
 
+async function sendSupportEmail(req, res) {
+  try {
+    const { subject, message, type, user } = req.body || {};
+    const toEmail = process.env.MJ_SENDER_EMAIL;
+    if (!toEmail) return res.status(500).json({ error: "TaskOps email not configured" });
+    const safeSubject = `[${(type || 'Message')}] ${subject || 'Employee Message'}`;
+    const userName = user?.name || '';
+    const userEmail = user?.email || '';
+    const userPhone = user?.phone || '';
+    const html = `
+<div style="font-family: Arial, sans-serif; color:#111;">
+  <div style="border:1px solid #e5e7eb; border-radius:12px; padding:20px; max-width:560px; margin:auto;">
+    <h2 style="margin:0 0 12px; color:#111;">New ${type || 'Message'} from Employee</h2>
+    <p style="margin:0 0 12px; line-height:1.6; white-space:pre-wrap;">${(message || '').replace(/</g, '&lt;')}</p>
+    <div style="margin-top:16px; font-size:14px; color:#374151;">
+      <div><b>Name:</b> ${userName || 'N/A'}</div>
+      <div><b>Email:</b> ${userEmail || 'N/A'}</div>
+      <div><b>Phone:</b> ${userPhone || 'N/A'}</div>
+    </div>
+    <p style="margin:16px 0 0; font-size:12px; color:#6b7280;">Sent via TaskOps Employee Portal</p>
+  </div>
+  </div>`;
+    await mailSender({ email: toEmail, subject: safeSubject, content: html });
+    return res.status(200).json({ message: "Email sent" });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = { 
     getEmployees, 
     addOneEmployee, 
@@ -162,5 +192,6 @@ module.exports = {
     getActiveEmployeesController, 
     getInactiveEmployeesController, 
     updateEmployeeRole,
-    getEmployeeByUserIdController 
+    getEmployeeByUserIdController,
+    sendSupportEmail 
 };

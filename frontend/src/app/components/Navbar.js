@@ -72,12 +72,12 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {session?.user?.role === "customer" && (
+            {(session?.user?.role === "customer" || session?.user?.role === "employee") && (
               <Link
-                href="/customer/email"
+                href={session?.user?.role === "employee" ? "/employee/email" : "/customer/email"}
                 aria-label="Email TaskOps"
                 className={`p-2 rounded-md transition-colors ${
-                  pathname === "/customer/email"
+                  pathname === "/customer/email" || pathname === "/employee/email"
                     ? "text-foreground bg-muted"
                     : "text-foreground/80 hover:text-foreground hover:bg-muted"
                 }`}
@@ -135,11 +135,11 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {session?.user?.role === "customer" && (
+            {(session?.user?.role === "customer" || session?.user?.role === "employee") && (
               <Link
-                href="/customer/email"
+                href={session?.user?.role === "employee" ? "/employee/email" : "/customer/email"}
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  pathname === "/customer/email"
+                  pathname === "/customer/email" || pathname === "/employee/email"
                     ? "text-foreground bg-muted"
                     : "text-foreground/80 hover:text-foreground hover:bg-muted"
                 }`}

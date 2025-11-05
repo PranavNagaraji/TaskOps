@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Mail } from "lucide-react";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -72,6 +72,21 @@ export default function Navbar() {
               </Link>
             ))}
 
+            {session?.user?.role === "customer" && (
+              <Link
+                href="/customer/email"
+                aria-label="Email TaskOps"
+                className={`p-2 rounded-md transition-colors ${
+                  pathname === "/customer/email"
+                    ? "text-foreground bg-muted"
+                    : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                }`}
+                title="Email TaskOps"
+              >
+                <Mail className="w-5 h-5" />
+              </Link>
+            )}
+
             {status === "authenticated" && (
               <button
                 onClick={() => signOut({ callbackUrl: "/auth/signin" })}
@@ -119,6 +134,22 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+
+            {session?.user?.role === "customer" && (
+              <Link
+                href="/customer/email"
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  pathname === "/customer/email"
+                    ? "text-foreground bg-muted"
+                    : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Mail className="w-5 h-5" />
+                  <span>Email</span>
+                </div>
+              </Link>
+            )}
 
             {status === "authenticated" && (
               <button

@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.7",
     "next": "15.5.4",
     "next-auth": "^4.24.11",
     "react": "19.1.0",

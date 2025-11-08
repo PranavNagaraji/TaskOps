@@ -12,6 +12,7 @@ const userRouter = require("./routes/usersRoute");
 const authRouter = require("./routes/authRoutes");
 const employeeVerificationRouter = require("./routes/employeeVerificationRoute");
 const otpRouter = require("./routes/otpRoutes");
+const addressesRouter = require("./routes/addressesRoute");
 
 require('dotenv').config();
 
@@ -31,6 +32,7 @@ app.use("/api/users", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/employee-verification", employeeVerificationRouter);
 app.use("/api/otp", otpRouter);
+app.use("/api/addresses", addressesRouter);
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);

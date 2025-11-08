@@ -43,6 +43,10 @@ const Users = {
     },
 
     async deleteUser(connection, id) {
+        await connection.execute(`DELETE FROM ADDRESSES WHERE USER_ID = :id`, [id], { autoCommit: true });
+        await connection.execute(`DELETE FROM EMPLOYEE_VERIFICATION WHERE USER_ID = :id`, [id], { autoCommit: true });
+        await connection.execute(`DELETE FROM EMPLOYEES WHERE USER_ID = :id`, [id], { autoCommit: true });
+        await connection.execute(`DELETE FROM CUSTOMERS WHERE USER_ID = :id`, [id], { autoCommit: true });
         const sql = `DELETE FROM users WHERE id = :id`;
         await connection.execute(sql, [id], { autoCommit: true });
     },

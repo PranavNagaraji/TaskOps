@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
 
 export default function SignUpPage() {
     // Common fields
@@ -23,6 +24,25 @@ export default function SignUpPage() {
     const [otpVerified, setOtpVerified] = useState(false);
     const [otp, setOtp] = useState("");
     const router = useRouter();
+    const [locationQuery, setLocationQuery] = useState("");
+    const [lat, setLat] = useState(null);
+    const [lng, setLng] = useState(null);
+    const [addressSaved, setAddressSaved] = useState(false);
+    const autocompleteRef = useRef(null);
+    const handlePlaceChanged = () => {
+        const place = autocompleteRef.current?.getPlace?.();
+        const loc = place?.geometry?.location;
+        if (loc) {
+            const newLat = typeof loc.lat === 'function' ? loc.lat() : loc.lat;
+            const newLng = typeof loc.lng === 'function' ? loc.lng() : loc.lng;
+            if (typeof newLat === 'number' && typeof newLng === 'number') {
+                setLat(newLat);
+                setLng(newLng);
+                setAddressSaved(false);
+            }
+        }
+    };
+
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
@@ -140,9 +160,20 @@ export default function SignUpPage() {
                 setIsLoading(false);
                 return;
             }
-            // --- 3. Add the new userId to the role-specific payload ---
+            if (lat != null && lng != null) {
+                try {
+                    const addrRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/addresses`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ user_id: userId, latitude: String(lat), longitude: String(lng) }),
+                    });
+                    if (addrRes.ok) {
+                        setAddressSaved(true);
+                    }
+                } catch (_) {}
+            }
             const finalPayload = { ...rolePayload, user_id: userId };
-            // --- 4. Create the customer/employee-related record linked by userId ---
+            // --- 3. Create the customer/employee-related record linked by userId ---
             const roleRes = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -233,6 +264,40 @@ export default function SignUpPage() {
                             <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-400/80" />
                             <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-400/80" />
                             <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full px-3 py-2.5 mb-4 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-400/80" />
+
+                            <label className="block text-sm font-medium text-zinc-300 mb-2">Location</label>
+                            <Autocomplete onLoad={(ac) => { autocompleteRef.current = ac; }} onPlaceChanged={handlePlaceChanged}>
+                                <input
+                                    type="text"
+                                    placeholder="Search location"
+                                    value={locationQuery}
+                                    onChange={(e) => setLocationQuery(e.target.value)}
+                                    className="w-full px-3 py-2.5 mb-3 rounded-lg bg-zinc-800/60 border border-white/10 text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-teal-400/80 animate-fade-in"
+                                />
+                            </Autocomplete>
+                            <GoogleMap
+                                center={lat != null && lng != null ? { lat, lng } : { lat: 20.5937, lng: 78.9629 }}
+                                zoom={lat != null && lng != null ? 14 : 5}
+                                mapContainerClassName="w-full h-64 mb-3 rounded-lg bg-zinc-800/60 border border-white/10 shadow-inner animate-fade-in"
+                                options={{ disableDefaultUI: false }}
+                            >
+                                <Marker
+                                    position={lat != null && lng != null ? { lat, lng } : { lat: 20.5937, lng: 78.9629 }}
+                                    draggable={true}
+                                    onDragEnd={(e) => {
+                                        const ll = e.latLng;
+                                        if (ll) {
+                                            setLat(ll.lat());
+                                            setLng(ll.lng());
+                                            setAddressSaved(false);
+                                        }
+                                    }}
+                                />
+                            </GoogleMap>
+                            <div className="text-xs text-zinc-400 mb-4">Latitude: {lat != null ? lat.toFixed(6) : "-"} • Longitude: {lng != null ? lng.toFixed(6) : "-"}</div>
+                            {addressSaved && (
+                                <div className="mb-4 w-full rounded-lg border border-green-500/20 bg-green-500/10 text-green-300 text-sm py-2 px-3">Address saved</div>
+                            )}
 
                             <hr className="my-4" />
 
